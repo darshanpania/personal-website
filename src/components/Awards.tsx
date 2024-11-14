@@ -1,5 +1,5 @@
 'use client';
-import { Award, ChevronRight } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 interface AwardItem {
   year: string;
