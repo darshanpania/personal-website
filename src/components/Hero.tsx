@@ -42,7 +42,7 @@ const Hero = () => {
                         </SimpleAnimation>
                         <SimpleAnimation animation="fade-up" delay={0.4}>
                         <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
-                            An accomplished Engineering Manager with 12+ years of experience, leading CleverTap's Gaming and LiveOps team. 
+                            An accomplished Engineering Manager with 12+ years of experience, leading CleverTap&apos;s Gaming and LiveOps team. 
                             Expertise in driving in-app experience enhancements with features like Remote Configs and A/B testing, 
                             while managing Mobile SDK development and leading innovative projects.
                         </p>
