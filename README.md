@@ -1,11 +1,12 @@
-# Personal Website
+# My Personal Website
 
-A modern, responsive personal website showcasing my professional experience, education, awards, and writing portfolio. Built with Next.js 15, React 19, and Tailwind CSS.
+A modern, responsive personal website showcasing my professional experience, education, awards, and writing portfolio. Built with Next.js 15, React 19, Tailwind CSS and Windsurf.
 
 ## Features
 
 - **Responsive Design**: Fully responsive layout optimized for desktop, tablet, and mobile devices
 - **Dark Mode**: Elegant dark mode support with smooth transitions
+- **Dynamic Project Filtering**: Categorized display of projects (All, Android, iOS, Web) with interactive filter buttons
 - **Modern UI Components**: 
   - Interactive navigation with mobile-friendly menu
   - Timeline-based layouts for experience and education
@@ -42,6 +43,13 @@ A modern, responsive personal website showcasing my professional experience, edu
 - Detailed descriptions
 - Interactive cards
 
+### Projects
+- Dedicated page for showcasing side projects
+- Categorized display: All, Android, iOS, Web
+- Interactive category filter buttons
+- Project cards with name, description, platform icon, and link
+- Responsive grid layout that adapts to the number of projects
+
 ### Writing Portfolio
 - Categorized articles:
   - Technical blogs
@@ -64,5 +72,6 @@ A modern, responsive personal website showcasing my professional experience, edu
 - Tailwind CSS 3.4.1
 - TypeScript
 - Lucide React Icons
+- Headless UI (implicitly via Tailwind CSS components or custom implementations)
 
 Built with modern web technologies focusing on performance, accessibility, and user experience.

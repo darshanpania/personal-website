@@ -42,9 +42,9 @@ const Hero = () => {
                         </SimpleAnimation>
                         <SimpleAnimation animation="fade-up" delay={0.4}>
                         <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed mb-8">
-                            An accomplished Engineering Manager with 12+ years of experience, leading CleverTap&apos;s Gaming and LiveOps team. 
-                            Expertise in driving in-app experience enhancements with features like Remote Configs and A/B testing, 
-                            while managing Mobile SDK development and leading innovative projects.
+                        Accomplished Engineering Manager with 12+ years of experience at CleverTap, driving mobile innovation and in-app engagement. I lead teams that bridge cutting-edge mobile development (Android/iOS) with robust backend systems (Java, AWS), ensuring end-to-end ownership of scalable solutions. 
+                        My track record includes spearheading initiatives like Leanplum integration and cross-platform SDK architecture—while driving key features such as Remote Configs, A/B testing, and no-code tools for enhanced user experiences. 
+                        Passionate about aligning agile, frontend innovation with comprehensive backend infrastructure to deliver high-standard technology solutions.
                         </p>
                         </SimpleAnimation>
                         <SimpleAnimation animation="fade-up" delay={0.4}>

@@ -1,5 +1,4 @@
 // app/page.tsx
-import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Experience from '@/components/Experience';
 import Education from '@/components/Education';
@@ -9,8 +8,6 @@ import Contact from '@/components/Contact';
 export default function Home() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-900">
-      <Header />
-      
       {/* Main content */}
       <div className="flex flex-col">
         {/* Hero Section */}

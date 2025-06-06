@@ -18,12 +18,12 @@ const experiences: ExperienceItem[] = [
         duration: "JUNE 2017 - PRESENT",
         location: "MUMBAI",
         achievements: [
-        "Led the Mobile SDK development team, expanding it to 15 members and directing the launch of 10 Mobile SDKs, 2 Web SDKs, and 3 data integration partner SDKs.",
-        "Architected the 2021 refactoring of CleverTap's Android SDK, prioritizing unit testing and code quality.",
-        "Facilitated cross-functional collaboration, ensuring smooth SDK releases and integration processes.",
-        "Played a pivotal role in the Leanplum acquisition integration project.",
-        "Key contributor to the CleverTap RenderMax SDK development.",
-        "Transitioned to head the Gaming and LiveOps full-stack team in 2024, managing 12 technical professionals."
+        "In 2024, I transitioned to lead the App-Experiences full-stack team, managing 3 Team Leads and 12 engineers across Mumbai and Sofia. In this role, I collaborate closely with product and design leaders to craft innovative mobile app experiences — driving initiatives such as In-App Experiences, Remote Configs, and A/B Testing to elevate user engagement.",
+        "Previously, I was a key contributor to the CleverTap RenderMax SDK initiative, enhancing push notification deliverability and user engagement—  a project distinguished by a patent pending.",
+        "I played a pivotal role in steering the integration project during the Leanplum acquisition, successfully merging key features between the Leanplum and CleverTap SDKs while maintaining high performance and stability.",
+        "Building a strong foundation, I facilitated cross-functional collaboration across teams, mentoring engineers and ensuring smooth SDK releases and integration processes while promoting best practices in coding and professional development.",
+        "In 2021, I led the architectural refactoring of CleverTap’s Android SDK—prioritizing unit testing and code quality through the adoption of tools like Mockito, JUnit, and GitHub Actions, as well as establishing robust UI automation testing frameworks using BrowserStack and internal tools.",
+        "Starting as the fi rst Android developer, I eventually led the Mobile SDK development team, growing it to 15 members and directing the successful launch of 10 Mobile SDKs, 2 Web SDKs, and 3 partner SDKs. This effort greatly enhanced CleverTap’s presence across several platforms, including Android, Flutter, iOS, React Native, Cordova, and Unity."
         ]
     },
     {
@@ -32,8 +32,8 @@ const experiences: ExperienceItem[] = [
         duration: "NOVEMBER 2016 - JUNE 2017",
         location: "MUMBAI",
         achievements: [
-        "Led a comprehensive overhaul of the Doctor and Patient Android applications.",
-        "Developed functionality using multiple essential Android libraries such as Retrofit, Volley, Glide, and MPAndroid Charts."
+        "Worked on a comprehensive overhaul of the Doctor and Patient Android applications, leveraging the full spectrum of native Android APIs including Camera, Fragments, AsyncTasks, ViewPagers, TabLayouts, and Services, among others.",
+        "Additionally, developed functionality using multiple essential Android libraries such as Retrofit, Volley, Glide, and MPAndroid Charts."
         ]
     },
     {
@@ -42,9 +42,9 @@ const experiences: ExperienceItem[] = [
         duration: "JULY 2015 - OCTOBER 2016",
         location: "MUMBAI",
         achievements: [
-        "Collaborated with cross-functional teams to lead the end-to-end development cycle.",
-        "Oversaw the planning, execution, and testing phases.",
-        "Managed and mentored a team of 5 interns."
+        "Collaborated with cross-functional teams to lead the end-to-end development cycle of all features for the Google Play Store release.",
+        "Oversaw the planning, execution, and testing phases while ensuring the successful deployment of the product.",
+        "Managed and mentored a team of 5 interns who were assigned various modules, including UI/UX design, core logic coding, and more, to ensure the timely delivery of high-quality work."
         ]
     },
     {
@@ -53,9 +53,8 @@ const experiences: ExperienceItem[] = [
         duration: "SEPTEMBER 2012 – JULY 2015",
         location: "MUMBAI & BANGALORE",
         achievements: [
-        "Enhanced AT&T's server deployment processes, leading migration from Unix to Linux.",
-        "Automated manual operations using Unix Shell Scripting and Cron Batch Jobs.",
-        "Handled ad-hoc change requests for Data Migration from COBOL to JAVA."
+        "As a Senior Software Engineer at Accenture, I significantly enhanced AT&T's server deployment processes, leading the migration of deployment scripts from Unix to Linux for improved efficiency and reliability.",
+        "I automated numerous manual operations using Unix Shell Scripting and Cron Batch Jobs, saving time and cost. Additionally, I handled ad-hoc change requests for Data Migration from COBOL to JAVA, showcasing my technical expertise and adaptability."
         ]
     }
     ];

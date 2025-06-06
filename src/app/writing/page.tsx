@@ -1,5 +1,4 @@
 // app/writing/page.tsx
-import Header from '@/components/Header';
 import { Laptop, BookOpen, Plane, Utensils } from 'lucide-react';
 
 interface Article {
@@ -313,7 +312,6 @@ const CategoryArticles = ({ category }: { category: CategorySection }) => {
 export default function WritingPage() {
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header />
       
       <div className="pt-32 pb-20">
         <div className="container mx-auto px-4">
