@@ -22,6 +22,13 @@ const projectsData: Project[] = [
     category: 'Android',
   },
   {
+    name: 'RainSurfer',
+    description: 'RainSurfer is a full-stack web application that integrates with the Raindrop.io API to help users randomly discover and read articles from their saved collections. The application uses OAuth 2.0 for authentication, allows users to select collections as their reading pool, displays random article previews with cover images and excerpts, and provides functionality to open articles in a new tab, mark them as read (moving them between collections), or skip to the next random article.',
+    link: 'https://rainsurfer.darshanpania.me',
+    platform: 'web',
+    category: 'Web',
+  },
+  {
     name: 'PantryChef',
     description: 'Coming soon',
     link: '#',
