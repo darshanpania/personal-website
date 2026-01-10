@@ -31,7 +31,7 @@ const projectsData: Project[] = [
   {
     name: 'Raindrop IO Remote MCP Server',
     description: 'A Model Context Protocol (MCP) server for accessing Raindrop.io (https://raindrop.io/) bookmarks via HTTP/SSE transport. Deploy to Railway with automatic GitHub Actions CI/CD.',
-    link: 'https://github.com/darshanpania/raindrop-mcp-remote',
+    link: 'https://github.com/darshanpania/raindrop-io-mcp-server',
     platform: 'web',
     category: 'Web',
   },
