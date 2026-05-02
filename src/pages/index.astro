@@ -4,8 +4,31 @@ import TypingName from "@/components/TypingName.astro";
 import SocialIcon from "@/components/SocialIcon.astro";
 import { getCollection } from "astro:content";
 
-const posts = (await getCollection("blog", ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+interface Entry {
+  title: string;
+  date: Date;
+  href: string;
+  external: boolean;
+}
+
+const externals = await getCollection("blog");
+const locals = await getCollection("posts", ({ data }) => !data.draft);
+
+const recent: Entry[] = [
+  ...externals.map((p) => ({
+    title: p.data.title,
+    date: p.data.date,
+    href: p.data.url,
+    external: true,
+  })),
+  ...locals.map((p) => ({
+    title: p.data.title,
+    date: p.data.date,
+    href: `/blog/${p.id}`,
+    external: false,
+  })),
+]
+  .sort((a, b) => b.date.getTime() - a.date.getTime())
   .slice(0, 3);
 
 const fmt = (d: Date) =>
@@ -92,17 +115,27 @@ const socials = [
     </h2>
     <ul class="divide-y divide-(--border)">
       {
-        posts.map((p) => (
+        recent.map((p) => (
           <li>
             <a
-              href={`/blog/${p.id}`}
+              href={p.href}
+              target={p.external ? "_blank" : undefined}
+              rel={p.external ? "noopener noreferrer" : undefined}
               class="group flex items-baseline justify-between gap-4 py-3"
             >
               <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
-                {p.data.title}
+                {p.title}
+                {p.external && (
+                  <span
+                    aria-hidden
+                    class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
+                  >
+                    ↗
+                  </span>
+                )}
               </span>
               <span class="font-mono text-xs text-(--text-secondary) shrink-0">
-                {fmt(p.data.date)}
+                {fmt(p.date)}
               </span>
             </a>
           </li>

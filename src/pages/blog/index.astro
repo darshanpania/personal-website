@@ -3,14 +3,41 @@ import Base from "@/layouts/Base.astro";
 import TypingName from "@/components/TypingName.astro";
 import { getCollection } from "astro:content";
 
-const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
-);
+interface Entry {
+  id: string;
+  title: string;
+  date: Date;
+  category: "tech" | "fiction" | "non-fiction";
+  href: string;
+  external: boolean;
+}
 
-const grouped: Record<string, typeof posts> = {};
-for (const p of posts) {
-  const year = p.data.date.getFullYear().toString();
-  (grouped[year] ??= []).push(p);
+const externals = await getCollection("blog");
+const locals = await getCollection("posts", ({ data }) => !data.draft);
+
+const entries: Entry[] = [
+  ...externals.map((p) => ({
+    id: p.id,
+    title: p.data.title,
+    date: p.data.date,
+    category: p.data.category,
+    href: p.data.url,
+    external: true,
+  })),
+  ...locals.map((p) => ({
+    id: p.id,
+    title: p.data.title,
+    date: p.data.date,
+    category: p.data.category,
+    href: `/blog/${p.id}`,
+    external: false,
+  })),
+].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+const grouped: Record<string, Entry[]> = {};
+for (const e of entries) {
+  const year = e.date.getFullYear().toString();
+  (grouped[year] ??= []).push(e);
 }
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
 
@@ -50,21 +77,31 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
           </h2>
           <ul class="border-t border-(--border)">
             {
-              grouped[year].map((p) => (
+              grouped[year].map((e) => (
                 <li
-                  data-category={p.data.category}
+                  data-category={e.category}
                   class="post-row border-b border-(--border)"
                 >
                   <a
-                    href={`/blog/${p.id}`}
+                    href={e.href}
+                    target={e.external ? "_blank" : undefined}
+                    rel={e.external ? "noopener noreferrer" : undefined}
                     class="group flex items-baseline justify-between gap-4 py-3"
                   >
                     <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
-                      {p.data.title}
+                      {e.title}
+                      {e.external && (
+                        <span
+                          aria-hidden
+                          class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
+                        >
+                          ↗
+                        </span>
+                      )}
                     </span>
                     <span class="font-mono text-xs text-(--text-secondary) shrink-0">
-                      {p.data.date.toLocaleString("en-US", { month: "short" })}{" "}
-                      {p.data.date.getFullYear()}
+                      {e.date.toLocaleString("en-US", { month: "short" })}{" "}
+                      {e.date.getFullYear()}
                     </span>
                   </a>
                 </li>
