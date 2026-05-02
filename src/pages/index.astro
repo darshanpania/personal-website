@@ -1,6 +1,7 @@
 ---
 import Base from "@/layouts/Base.astro";
 import TypingName from "@/components/TypingName.astro";
+import SocialIcon from "@/components/SocialIcon.astro";
 import { getCollection } from "astro:content";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft))
@@ -9,55 +10,80 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft))
 
 const fmt = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+const socials = [
+  {
+    network: "github" as const,
+    label: "github",
+    href: "https://github.com/darshanpania",
+  },
+  {
+    network: "linkedin" as const,
+    label: "linkedin",
+    href: "https://linkedin.com/in/darshanpania",
+  },
+  {
+    network: "twitter" as const,
+    label: "twitter",
+    href: "https://twitter.com/i_m_Pania",
+  },
+  {
+    network: "substack" as const,
+    label: "substack",
+    href: "https://lostmeanderingthoughts.substack.com/",
+  },
+];
 ---
 
 <Base
   title="Darshan Pania"
-  description="Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and the occasional side project."
+  description="Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and AI-native developer tooling."
 >
   <section class="space-y-2">
     <TypingName text="Darshan Pania" />
-    <p class="text-(--mono-accent) text-base">Director of Engineering</p>
+    <p class="text-(--mono-accent) text-base">
+      Director of Engineering @ CleverTap
+    </p>
   </section>
 
   <hr class="my-8 border-0 border-t border-(--border) w-10" />
 
   <section class="space-y-4 fade-in">
     <p class="text-(--text-primary) text-base leading-7">
-      I build mobile SDKs and engineering teams at CleverTap — 12 years working on
-      the infrastructure that powers in-app engagement for thousands of apps.
+      I build mobile SDKs and engineering teams at <a
+        href="https://clevertap.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-(--mono-accent) hover:underline underline-offset-4"
+        >CleverTap</a
+      >. 13+ years working on the infrastructure that powers engagement and
+      retention for thousands of apps all over the world.
     </p>
-    <p class="text-(--text-secondary) text-base leading-7">
-      I write about engineering leadership, mobile development, and the occasional
-      side project.
+    <p class="text-(--text-primary) text-base leading-7">
+      I love tinkering with AI tools, brewing my own coffee, listening to music
+      from all over the world, writing sci-fi, and following Arsenal FC.
+    </p>
+    <p class="text-(--text-primary) text-base leading-7">
+      I write about engineering leadership, AI workflows, mobile development,
+      and the occasional sci-fi story.
     </p>
   </section>
 
   <section class="mt-8 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm fade-in">
-    <a
-      href="https://github.com/darshanpania"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="text-(--mono-accent) hover:underline underline-offset-4"
-    >
-      github <span aria-hidden>↗</span>
-    </a>
-    <a
-      href="https://linkedin.com/in/darshanpania"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="text-(--mono-accent) hover:underline underline-offset-4"
-    >
-      linkedin <span aria-hidden>↗</span>
-    </a>
-    <a
-      href="https://twitter.com/i_m_Pania"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="text-(--mono-accent) hover:underline underline-offset-4"
-    >
-      twitter <span aria-hidden>↗</span>
-    </a>
+    {
+      socials.map((s) => (
+        <a
+          href={s.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-(--mono-accent) hover:underline underline-offset-4"
+        >
+          <SocialIcon network={s.network} />
+          {s.label}
+          <span aria-hidden class="ml-0.5">↗</span>
+        </a>
+      ))
+    }
   </section>
 
   <section class="mt-14 fade-in">
