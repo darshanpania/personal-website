@@ -1,0 +1,38 @@
+---
+import Base from "@/layouts/Base.astro";
+
+const links = [
+  { label: "darshanpania@gmail.com", href: "mailto:darshanpania@gmail.com" },
+  { label: "twitter / @i_m_Pania", href: "https://twitter.com/i_m_Pania" },
+  { label: "linkedin / darshanpania", href: "https://linkedin.com/in/darshanpania" },
+  { label: "github / darshanpania", href: "https://github.com/darshanpania" },
+];
+---
+
+<Base title="contact — Darshan Pania" description="Reach out by email, Twitter, LinkedIn, or GitHub.">
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    contact
+  </h1>
+
+  <p class="mt-6 text-(--text-secondary) leading-7">
+    The best way to reach me is email. I'm also fairly active on Twitter and
+    LinkedIn.
+  </p>
+
+  <ul class="mt-8 space-y-3 font-mono text-sm">
+    {
+      links.map((l) => (
+        <li>
+          <a
+            href={l.href}
+            target={l.href.startsWith("http") ? "_blank" : undefined}
+            rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
+            class="text-(--mono-accent) hover:underline underline-offset-4"
+          >
+            {l.label} <span aria-hidden>↗</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Base>

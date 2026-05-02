@@ -1,0 +1,28 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  date: Date;
+  monoDate?: boolean;
+  dateFormat?: "year-month" | "month-year";
+}
+
+const { href, title, date, monoDate = true, dateFormat = "year-month" } = Astro.props;
+
+const formatted =
+  dateFormat === "year-month"
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+    : `${date.toLocaleString("en-US", { month: "short" })} ${date.getFullYear()}`;
+---
+
+<a
+  href={href}
+  class="group flex items-baseline justify-between gap-4 py-3 border-b border-(--border) last:border-b-0 fade-in"
+>
+  <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+    {title}
+  </span>
+  <span class={`text-xs ${monoDate ? "font-mono" : ""} text-(--text-secondary) shrink-0`}>
+    {formatted}
+  </span>
+</a>

@@ -1,0 +1,93 @@
+---
+import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog", ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3);
+
+const fmt = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+---
+
+<Base
+  title="Darshan Pania"
+  description="Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and the occasional side project."
+>
+  <section class="space-y-2">
+    <TypingName text="Darshan Pania" />
+    <p class="text-(--mono-accent) text-base">Director of Engineering</p>
+  </section>
+
+  <hr class="my-8 border-0 border-t border-(--border) w-10" />
+
+  <section class="space-y-4 fade-in">
+    <p class="text-(--text-primary) text-base leading-7">
+      I build mobile SDKs and engineering teams at CleverTap — 12 years working on
+      the infrastructure that powers in-app engagement for thousands of apps.
+    </p>
+    <p class="text-(--text-secondary) text-base leading-7">
+      I write about engineering leadership, mobile development, and the occasional
+      side project.
+    </p>
+  </section>
+
+  <section class="mt-8 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm fade-in">
+    <a
+      href="https://github.com/darshanpania"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      github <span aria-hidden>↗</span>
+    </a>
+    <a
+      href="https://linkedin.com/in/darshanpania"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      linkedin <span aria-hidden>↗</span>
+    </a>
+    <a
+      href="https://twitter.com/i_m_Pania"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      twitter <span aria-hidden>↗</span>
+    </a>
+  </section>
+
+  <section class="mt-14 fade-in">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) mb-4">
+      recent writing
+    </h2>
+    <ul class="divide-y divide-(--border)">
+      {
+        posts.map((p) => (
+          <li>
+            <a
+              href={`/blog/${p.id}`}
+              class="group flex items-baseline justify-between gap-4 py-3"
+            >
+              <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+                {p.data.title}
+              </span>
+              <span class="font-mono text-xs text-(--text-secondary) shrink-0">
+                {fmt(p.data.date)}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <a
+      href="/blog"
+      class="inline-block mt-4 font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      all posts <span aria-hidden>→</span>
+    </a>
+  </section>
+</Base>

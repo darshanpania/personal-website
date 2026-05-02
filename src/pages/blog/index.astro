@@ -1,0 +1,110 @@
+---
+import Base from "@/layouts/Base.astro";
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+
+const grouped: Record<string, typeof posts> = {};
+for (const p of posts) {
+  const year = p.data.date.getFullYear().toString();
+  (grouped[year] ??= []).push(p);
+}
+const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
+
+const categories = ["all", "tech", "fiction", "non-fiction"] as const;
+---
+
+<Base title="writing — Darshan Pania" description="Essays on engineering leadership, mobile SDKs, and side projects.">
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    writing
+  </h1>
+
+  <div
+    id="category-pills"
+    class="mt-6 flex flex-wrap gap-2 font-mono text-sm"
+    data-active="all"
+  >
+    {
+      categories.map((c) => (
+        <button
+          type="button"
+          data-category={c}
+          class="pill px-3 py-1 rounded-full border border-(--border) text-(--text-secondary) transition-colors hover:text-(--text-primary)"
+        >
+          {c}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="mt-10 space-y-10">
+    {
+      years.map((year) => (
+        <section data-year={year}>
+          <h2 class="font-mono text-sm text-(--text-secondary) mb-2">
+            {year}
+          </h2>
+          <ul class="border-t border-(--border)">
+            {
+              grouped[year].map((p) => (
+                <li
+                  data-category={p.data.category}
+                  class="post-row border-b border-(--border)"
+                >
+                  <a
+                    href={`/blog/${p.id}`}
+                    class="group flex items-baseline justify-between gap-4 py-3"
+                  >
+                    <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+                      {p.data.title}
+                    </span>
+                    <span class="font-mono text-xs text-(--text-secondary) shrink-0">
+                      {p.data.date.toLocaleString("en-US", { month: "short" })}{" "}
+                      {p.data.date.getFullYear()}
+                    </span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+
+  <script>
+    const container = document.getElementById("category-pills");
+    const pills = container?.querySelectorAll<HTMLButtonElement>(".pill");
+    const rows = document.querySelectorAll<HTMLLIElement>(".post-row");
+    const years = document.querySelectorAll<HTMLElement>("[data-year]");
+
+    const setActive = (cat: string) => {
+      pills?.forEach((p) => {
+        const active = p.dataset.category === cat;
+        p.classList.toggle("bg-(--text-primary)", active);
+        p.classList.toggle("text-(--bg)", active);
+        p.classList.toggle("border-(--text-primary)", active);
+        p.classList.toggle("text-(--text-secondary)", !active);
+      });
+
+      rows.forEach((r) => {
+        const match = cat === "all" || r.dataset.category === cat;
+        r.classList.toggle("hidden", !match);
+      });
+
+      years.forEach((sec) => {
+        const visible = sec.querySelectorAll(".post-row:not(.hidden)").length > 0;
+        sec.classList.toggle("hidden", !visible);
+      });
+
+      if (container) container.dataset.active = cat;
+    };
+
+    pills?.forEach((p) =>
+      p.addEventListener("click", () => setActive(p.dataset.category!)),
+    );
+    setActive("all");
+  </script>
+</Base>

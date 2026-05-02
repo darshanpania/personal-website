@@ -1,0 +1,44 @@
+---
+import ThemeToggle from "./ThemeToggle.astro";
+
+const { pathname } = Astro.url;
+const isActive = (href: string) => {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+};
+
+const links = [
+  { href: "/blog", label: "blog" },
+  { href: "/projects", label: "projects" },
+  { href: "/resume", label: "resume" },
+  { href: "/contact", label: "contact" },
+];
+---
+
+<header
+  id="site-header"
+  class="sticky top-0 z-50 border-b border-(--border) bg-(--bg)/80 backdrop-blur supports-[backdrop-filter]:bg-(--bg)/70"
+>
+  <div class="mx-auto max-w-[640px] px-4 py-3 flex items-center justify-between gap-4">
+    <a href="/" class="font-mono text-sm text-(--mono-accent) tracking-tight">
+      darshan pania
+    </a>
+    <nav class="flex items-center gap-5 text-sm">
+      {
+        links.map(({ href, label }) => (
+          <a
+            href={href}
+            class={`transition-colors ${
+              isActive(href)
+                ? "text-(--text-primary) font-medium"
+                : "text-(--text-secondary) hover:text-(--text-primary)"
+            }`}
+          >
+            {label}
+          </a>
+        ))
+      }
+      <ThemeToggle />
+    </nav>
+  </div>
+</header>

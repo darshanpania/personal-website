@@ -1,0 +1,145 @@
+---
+import Base from "@/layouts/Base.astro";
+
+const experience = [
+  {
+    role: "Director of Engineering",
+    company: "CleverTap",
+    dates: "2020 — present",
+    description:
+      "Lead the App-Experiences full-stack team — 3 leads, 12 engineers across Mumbai and Sofia. Driving In-App Experiences, Remote Configs, and A/B Testing. Previously led Mobile SDK team across Android, iOS, Flutter, React Native, Cordova, Unity. Steered the Leanplum integration after the acquisition.",
+  },
+  {
+    role: "Engineering Manager — CleverTap",
+    company: "CleverTap",
+    dates: "2017 — 2020",
+    description:
+      "Built and scaled the Mobile SDK team from one Android engineer to fifteen across six platforms. Architected the SDK refactor that introduced unit testing (JUnit, Mockito), CI (GitHub Actions), and UI automation (BrowserStack).",
+  },
+  {
+    role: "Lead Android Engineer",
+    company: "DawaiBox",
+    dates: "2016 — 2017",
+    description:
+      "Rewrote the Doctor and Patient Android apps from the ground up. Native Android stack — Camera, Fragments, Services — with Retrofit, Volley, Glide, and MPAndroid Charts.",
+  },
+  {
+    role: "Product Lead",
+    company: "Grabstr",
+    dates: "2015 — 2016",
+    description:
+      "Led end-to-end development of the Play Store release. Mentored a team of 5 interns across UI/UX, core logic, and QA.",
+  },
+  {
+    role: "Senior Software Engineer",
+    company: "Accenture",
+    dates: "2012 — 2015",
+    description:
+      "Migrated AT&T server deployment scripts from Unix to Linux. Automated manual operations with Unix Shell Scripting and cron. Handled COBOL → JAVA data migration change requests.",
+  },
+];
+
+const education = [
+  {
+    degree: "B.E. Information Technology",
+    institution: "Mumbai University",
+    dates: "2008 — 2012",
+  },
+  {
+    degree: "Class XII",
+    institution: "Rajhans Vidyalaya, Mumbai",
+    dates: "2008",
+  },
+  {
+    degree: "Class X",
+    institution: "The Indian High School, Dubai",
+    dates: "2006",
+  },
+];
+
+const awards = [
+  {
+    title: "Certified Great People Manager",
+    issuer: "Great Manager Institute, India",
+    dates: "2024",
+  },
+  {
+    title: "Above & Beyond Award",
+    issuer: "CleverTap — for the Leanplum acquisition integration",
+    dates: "2022",
+  },
+];
+---
+
+<Base title="resume — Darshan Pania" description="Engineering leadership, mobile SDKs, and 12+ years of building teams that ship.">
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    resume
+  </h1>
+
+  <section class="mt-12">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) pb-1 border-b border-(--border)">
+      experience
+    </h2>
+    <div class="mt-6 space-y-8">
+      {
+        experience.map((e) => (
+          <article class="fade-in">
+            <div class="flex items-baseline justify-between gap-4">
+              <h3 class="text-(--text-primary) font-medium">
+                {e.role} <span class="text-(--text-secondary)">— {e.company}</span>
+              </h3>
+              <span class="font-mono text-sm text-(--text-secondary) shrink-0">
+                {e.dates}
+              </span>
+            </div>
+            <p class="mt-2 text-sm text-(--text-secondary) leading-6">
+              {e.description}
+            </p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="mt-14">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) pb-1 border-b border-(--border)">
+      education
+    </h2>
+    <div class="mt-6 space-y-5">
+      {
+        education.map((e) => (
+          <article class="flex items-baseline justify-between gap-4 fade-in">
+            <h3 class="text-(--text-primary) font-medium">
+              {e.degree}{" "}
+              <span class="text-(--text-secondary) font-normal">— {e.institution}</span>
+            </h3>
+            <span class="font-mono text-sm text-(--text-secondary) shrink-0">
+              {e.dates}
+            </span>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="mt-14">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) pb-1 border-b border-(--border)">
+      awards
+    </h2>
+    <div class="mt-6 space-y-5">
+      {
+        awards.map((a) => (
+          <article class="fade-in">
+            <div class="flex items-baseline justify-between gap-4">
+              <h3 class="text-(--text-primary) font-medium">{a.title}</h3>
+              <span class="font-mono text-sm text-(--text-secondary) shrink-0">
+                {a.dates}
+              </span>
+            </div>
+            <p class="mt-1 text-sm text-(--text-secondary)">{a.issuer}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+</Base>

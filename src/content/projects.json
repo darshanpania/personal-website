@@ -1,0 +1,34 @@
+[
+  {
+    "id": "notificity",
+    "name": "Notificity",
+    "platform": "android",
+    "description": "Captures and categorizes incoming push notifications, with search by app or keyword. Built with Jetpack Compose, Room DB, and Material Design.",
+    "link": "https://play.google.com/store/apps/details?id=com.darshan.notificity&hl=en",
+    "order": 1
+  },
+  {
+    "id": "rainsurfer",
+    "name": "RainSurfer",
+    "platform": "web",
+    "description": "Full-stack web app integrated with the Raindrop.io API for randomly discovering articles from saved collections. OAuth 2.0, article previews, mark-as-read flow.",
+    "link": "https://rainsurfer.darshanpania.me",
+    "order": 2
+  },
+  {
+    "id": "raindrop-mcp",
+    "name": "Raindrop IO Remote MCP Server",
+    "platform": "web",
+    "description": "An MCP server for accessing Raindrop.io bookmarks via HTTP/SSE transport. Deployed to Railway with GitHub Actions CI/CD.",
+    "link": "https://github.com/darshanpania/raindrop-io-mcp-server",
+    "order": 3
+  },
+  {
+    "id": "pantrychef",
+    "name": "PantryChef",
+    "platform": "web",
+    "description": "Coming soon.",
+    "link": "https://github.com/darshanpania",
+    "order": 4
+  }
+]

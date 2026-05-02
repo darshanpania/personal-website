@@ -1,0 +1,18 @@
+---
+title: "What I learned integrating Leanplum into CleverTap"
+date: 2025-11-08
+category: tech
+description: "Six months merging two mobile SDK stacks. Patterns, tradeoffs, and what I'd do differently."
+---
+
+Acquisitions are mostly an integration problem. Mobile SDK acquisitions are integration problems where the customer's app binary is the boundary you can't move.
+
+## The three forced choices
+
+Every customer-facing SDK migration eventually presents three choices, in this order:
+
+1. **Coexist or replace?** — Two SDKs in one binary is a debugging nightmare; replacement risks customer churn.
+2. **Identity reconciliation** — Whose user ID wins? When? At what merge cost?
+3. **API parity vs. ergonomics** — Do you preserve the old surface forever, or break callers and own the migration?
+
+We chose coexist-then-replace, with a 12-month migration window. Worth it. More to come.

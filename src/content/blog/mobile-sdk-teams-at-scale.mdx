@@ -1,0 +1,18 @@
+---
+title: "On building mobile SDK teams at scale"
+date: 2026-04-18
+category: tech
+description: "What I learned shipping 10 mobile SDKs across 6 platforms at CleverTap."
+---
+
+A short note on the operational scaffolding that makes mobile SDK teams ship reliably — code review norms, release trains, and the unglamorous work of dependency hygiene.
+
+## The boring stuff that compounds
+
+Every SDK team I've worked with eventually rediscovers the same three rules:
+
+1. **Pin everything.** Transitive deps are a tax that compounds across customer apps.
+2. **One release train per platform.** Branch hygiene gets sacrificed first when this slips.
+3. **The integration guide is the product.** If a customer can't ship in 30 minutes, the SDK is broken.
+
+More on each of these soon.
