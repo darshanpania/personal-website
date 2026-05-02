@@ -1,40 +1,102 @@
 ---
 import Base from "@/layouts/Base.astro";
 import TypingName from "@/components/TypingName.astro";
+import SocialIcon from "@/components/SocialIcon.astro";
 
-const links = [
-  { label: "darshanpania@gmail.com", href: "mailto:darshanpania@gmail.com" },
-  { label: "twitter / @i_m_Pania", href: "https://twitter.com/i_m_Pania" },
-  { label: "linkedin / darshanpania", href: "https://linkedin.com/in/darshanpania" },
-  { label: "github / darshanpania", href: "https://github.com/darshanpania" },
+const reach = [
+  {
+    network: "email" as const,
+    label: "darshanpania@gmail.com",
+    href: "mailto:darshanpania@gmail.com",
+  },
+  {
+    network: "cal" as const,
+    label: "cal.com/darshanpania",
+    href: "https://cal.com/darshanpania",
+  },
+];
+
+const elsewhere = [
+  {
+    network: "github" as const,
+    label: "github / darshanpania",
+    href: "https://github.com/darshanpania",
+  },
+  {
+    network: "linkedin" as const,
+    label: "linkedin / darshanpania",
+    href: "https://linkedin.com/in/darshanpania",
+  },
+  {
+    network: "twitter" as const,
+    label: "twitter / @i_m_Pania",
+    href: "https://twitter.com/i_m_Pania",
+  },
+  {
+    network: "substack" as const,
+    label: "substack / lostmeanderingthoughts",
+    href: "https://lostmeanderingthoughts.substack.com/",
+  },
 ];
 ---
 
-<Base title="contact — Darshan Pania" description="Reach out by email, Twitter, LinkedIn, or GitHub.">
+<Base title="contact — Darshan Pania" description="Reach me by email, schedule a call, or find me elsewhere on the internet.">
   <TypingName
     text="contact"
     class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
   />
 
-  <p class="mt-6 text-(--text-secondary) leading-7">
-    The best way to reach me is email. I'm also fairly active on Twitter and
-    LinkedIn.
+  <p class="mt-6 text-(--text-primary) leading-7">
+    Email if it's important. Cal.com if you want a half-hour of my undivided
+    attention. Everything else is where I lurk, post, and occasionally argue
+    about Arsenal.
   </p>
 
-  <ul class="mt-8 space-y-3 font-mono text-sm">
-    {
-      links.map((l) => (
-        <li>
-          <a
-            href={l.href}
-            target={l.href.startsWith("http") ? "_blank" : undefined}
-            rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
-            class="text-(--mono-accent) hover:underline underline-offset-4"
-          >
-            {l.label} <span aria-hidden>↗</span>
-          </a>
-        </li>
-      ))
-    }
-  </ul>
+  <section class="mt-10 fade-in">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) mb-4">
+      reach me
+    </h2>
+    <ul class="space-y-3 font-mono text-sm">
+      {
+        reach.map((l) => (
+          <li>
+            <a
+              href={l.href}
+              target={l.href.startsWith("http") ? "_blank" : undefined}
+              rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
+              class="inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
+            >
+              <SocialIcon network={l.network} />
+              {l.label}
+              <span aria-hidden class="ml-0.5">↗</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="mt-10 fade-in">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) mb-4">
+      elsewhere
+    </h2>
+    <ul class="space-y-3 font-mono text-sm">
+      {
+        elsewhere.map((l) => (
+          <li>
+            <a
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
+            >
+              <SocialIcon network={l.network} />
+              {l.label}
+              <span aria-hidden class="ml-0.5">↗</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 </Base>
