@@ -1,63 +1,68 @@
 ---
 import Base from "@/layouts/Base.astro";
 
-const experience = [
+const PATENT_URL =
+  "https://patents.google.com/patent/US12470637B2/en?oq=US12470637B2";
+
+interface ExperienceEntry {
+  role: string;
+  company: string;
+  dates: string;
+  descriptionHtml: string;
+}
+
+const experience: ExperienceEntry[] = [
   {
-    role: "Director of Engineering",
+    role: "Director, Engineering",
     company: "CleverTap",
-    dates: "2020 — present",
-    description:
-      "Lead the App-Experiences full-stack team — 3 leads, 12 engineers across Mumbai and Sofia. Driving In-App Experiences, Remote Configs, and A/B Testing. Previously led Mobile SDK team across Android, iOS, Flutter, React Native, Cordova, Unity. Steered the Leanplum integration after the acquisition.",
-  },
-  {
-    role: "Engineering Manager — CleverTap",
-    company: "CleverTap",
-    dates: "2017 — 2020",
-    description:
-      "Built and scaled the Mobile SDK team from one Android engineer to fifteen across six platforms. Architected the SDK refactor that introduced unit testing (JUnit, Mockito), CI (GitHub Actions), and UI automation (BrowserStack).",
+    dates: "Jun 2017 — present",
+    descriptionHtml: `Promoted from first Android developer to Director over 8 years. Currently leading the SDK team (Android and iOS, 7 engineers) and the Online Channels team (8 engineers across Frontend, Backend, and QA) in Mumbai and Sofia. In 2025, drove AI-tooling adoption across a 120+ engineer org, rolling out Claude Code, Cursor, and Windsurf with an evaluation framework and budget policy. Contributed to Vision (internal AI code review) and Alfred (a RAG AskBot built on FastAPI, Pinecone, and Cohere reranking). Co-inventor on the <a href="${PATENT_URL}" target="_blank" rel="noopener noreferrer" class="text-(--mono-accent) hover:underline underline-offset-4">RenderMax push notification patent (US12470637B2)</a>. Earlier, grew the SDK team from 1 to 15, shipped 10 mobile, 2 web, and 3 partner SDKs, drove the Leanplum acquisition integration in 2022, and led the 2021 Android SDK architectural refactor.`,
   },
   {
     role: "Lead Android Engineer",
     company: "DawaiBox",
-    dates: "2016 — 2017",
-    description:
-      "Rewrote the Doctor and Patient Android apps from the ground up. Native Android stack — Camera, Fragments, Services — with Retrofit, Volley, Glide, and MPAndroid Charts.",
+    dates: "Nov 2016 — Jun 2017",
+    descriptionHtml:
+      "Sole mobile engineer at a healthcare startup. Rewrote both the Doctor and Patient Android apps from scratch on native primitives (Camera, Fragments, Services, ViewPager). Established coding standards and review processes that the team adopted as it grew post-funding.",
   },
   {
     role: "Product Lead",
     company: "Grabstr",
-    dates: "2015 — 2016",
-    description:
-      "Led end-to-end development of the Play Store release. Mentored a team of 5 interns across UI/UX, core logic, and QA.",
+    dates: "Jul 2015 — Oct 2016",
+    descriptionHtml:
+      "Owned the Android product end-to-end from zero to Play Store launch, combining product, hands-on development, and team leadership. Managed a team of 5 across UI/UX, core logic, and backend integration. Ran Facebook and Instagram PPC campaigns at under $1 cost-per-install.",
   },
   {
     role: "Senior Software Engineer",
     company: "Accenture",
-    dates: "2012 — 2015",
-    description:
-      "Migrated AT&T server deployment scripts from Unix to Linux. Automated manual operations with Unix Shell Scripting and cron. Handled COBOL → JAVA data migration change requests.",
+    dates: "Sep 2012 — Jul 2015",
+    descriptionHtml:
+      "Enterprise services for the AT&amp;T account. Led the Unix-to-Linux migration of deployment scripts across regional environments with zero-downtime cutover. Automated deployment and monitoring with shell scripting and cron. Built custom parsers for the COBOL-to-Java data migration.",
   },
 ];
 
 const education = [
   {
     degree: "B.E. Information Technology",
-    institution: "Mumbai University",
+    institution: "Thadomal Shahani Engineering College, Mumbai University",
     dates: "2008 — 2012",
-  },
-  {
-    degree: "Class XII",
-    institution: "Rajhans Vidyalaya, Mumbai",
-    dates: "2008",
-  },
-  {
-    degree: "Class X",
-    institution: "The Indian High School, Dubai",
-    dates: "2006",
   },
 ];
 
-const awards = [
+interface AwardEntry {
+  title: string;
+  issuer: string;
+  dates: string;
+  link?: string;
+}
+
+const awards: AwardEntry[] = [
+  {
+    title: "Patent: RenderMax push notification platform",
+    issuer: "Co-inventor, CleverTap (US12470637B2)",
+    dates: "Granted",
+    link: PATENT_URL,
+  },
   {
     title: "Certified Great People Manager",
     issuer: "Great Manager Institute, India",
@@ -65,16 +70,59 @@ const awards = [
   },
   {
     title: "Above & Beyond Award",
-    issuer: "CleverTap — for the Leanplum acquisition integration",
+    issuer: "CleverTap, for the Leanplum acquisition integration",
     dates: "2022",
+  },
+  {
+    title: "Accenture Rising Star (Stellar Award)",
+    issuer: "Peer-nominated for delivery excellence on the AT&T account",
+    dates: "2013",
+  },
+];
+
+interface SpeakingEntry {
+  venue: string;
+  talk: string;
+  year: string;
+  link?: string;
+}
+
+const speaking: SpeakingEntry[] = [
+  {
+    venue: "DroidCon APAC",
+    talk: "Performance Testing in Android",
+    year: "2020",
+  },
+  {
+    venue: "DroidCon EMEA",
+    talk: "Performance Testing in Android",
+    year: "2020",
+  },
+  {
+    venue: "GDG DevFest Ahmedabad",
+    talk: "Developing Android Libraries",
+    year: "2019",
+    link: "https://www.youtube.com/watch?v=j8ZiTi7CVDM",
+  },
+  {
+    venue: "DroidCon India",
+    talk: "Developing Android Libraries",
+    year: "2019",
   },
 ];
 ---
 
-<Base title="resume — Darshan Pania" description="Engineering leadership, mobile SDKs, and 12+ years of building teams that ship.">
+<Base title="resume — Darshan Pania" description="Engineering leadership, mobile SDKs, AI-native developer tooling. 13+ years.">
   <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
     resume
   </h1>
+
+  <p class="mt-6 text-(--text-secondary) text-base leading-7">
+    Engineering leader with 13+ years building mobile platforms, customer-engagement
+    infrastructure, and AI-native developer tooling. Director at CleverTap, leading
+    SDK and Online Channels teams (15 engineers, Mumbai &amp; Sofia) while driving
+    AI adoption across 120+ engineers.
+  </p>
 
   <section class="mt-12">
     <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) pb-1 border-b border-(--border)">
@@ -92,9 +140,10 @@ const awards = [
                 {e.dates}
               </span>
             </div>
-            <p class="mt-2 text-sm text-(--text-secondary) leading-6">
-              {e.description}
-            </p>
+            <p
+              class="mt-2 text-sm text-(--text-secondary) leading-6"
+              set:html={e.descriptionHtml}
+            />
           </article>
         ))
       }
@@ -131,7 +180,20 @@ const awards = [
         awards.map((a) => (
           <article class="fade-in">
             <div class="flex items-baseline justify-between gap-4">
-              <h3 class="text-(--text-primary) font-medium">{a.title}</h3>
+              <h3 class="text-(--text-primary) font-medium">
+                {a.link ? (
+                  <a
+                    href={a.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-(--mono-accent) underline underline-offset-4 decoration-(--border) hover:decoration-(--mono-accent)"
+                  >
+                    {a.title} <span aria-hidden class="font-mono text-xs">↗</span>
+                  </a>
+                ) : (
+                  a.title
+                )}
+              </h3>
               <span class="font-mono text-sm text-(--text-secondary) shrink-0">
                 {a.dates}
               </span>
@@ -141,5 +203,45 @@ const awards = [
         ))
       }
     </div>
+  </section>
+
+  <section class="mt-14">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) pb-1 border-b border-(--border)">
+      speaking
+    </h2>
+    <ul class="mt-6">
+      {
+        speaking.map((s, i) => (
+          <li
+            class={`flex items-baseline justify-between gap-4 py-3 border-(--border) fade-in ${
+              i < speaking.length - 1 ? "border-b" : ""
+            }`}
+          >
+            <span class="text-(--text-primary)">
+              {s.venue}
+              {s.talk && (
+                <span class="text-(--text-secondary)"> — “{s.talk}”</span>
+              )}
+              {s.link && (
+                <>
+                  {" "}
+                  <a
+                    href={s.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono text-xs text-(--mono-accent) hover:underline underline-offset-4"
+                  >
+                    watch ↗
+                  </a>
+                </>
+              )}
+            </span>
+            <span class="font-mono text-sm text-(--text-secondary) shrink-0">
+              {s.year}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 </Base>
