@@ -1,5 +1,6 @@
 ---
 import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
 import { getCollection } from "astro:content";
 
 const projects = (await getCollection("projects")).sort(
@@ -8,9 +9,10 @@ const projects = (await getCollection("projects")).sort(
 ---
 
 <Base title="projects — Darshan Pania" description="Side projects across mobile and web.">
-  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
-    projects
-  </h1>
+  <TypingName
+    text="projects"
+    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
+  />
 
   <ul class="mt-10 border-t border-(--border)">
     {

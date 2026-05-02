@@ -1,29 +1,33 @@
 ---
 interface Props {
   text: string;
+  class?: string;
 }
-const { text } = Astro.props;
+
+const {
+  text,
+  class: className =
+    "font-mono text-2xl md:text-[2.25rem] font-medium text-(--text-primary) tracking-tight",
+} = Astro.props;
 ---
 
-<h1
-  id="typing-name"
-  class="font-mono text-2xl md:text-[2.25rem] font-medium text-(--text-primary) tracking-tight cursor-blink"
-  data-text={text}
->
-  <span id="typing-target"></span>
+<h1 class:list={[className, "cursor-blink"]} data-typing-text={text}>
+  <span data-typing-target></span>
 </h1>
 
 <script>
-  const el = document.getElementById("typing-target");
-  const host = document.getElementById("typing-name");
-  const text = host?.dataset.text ?? "";
-  if (el && text) {
-    let i = 0;
-    const step = Math.max(40, Math.floor(800 / text.length));
-    const tick = () => {
-      el.textContent = text.slice(0, ++i);
-      if (i < text.length) setTimeout(tick, step);
-    };
-    setTimeout(tick, 150);
-  }
+  document
+    .querySelectorAll<HTMLElement>("[data-typing-text]")
+    .forEach((host) => {
+      const text = host.dataset.typingText ?? "";
+      const target = host.querySelector<HTMLElement>("[data-typing-target]");
+      if (!target || !text) return;
+      let i = 0;
+      const step = Math.max(40, Math.floor(800 / text.length));
+      const tick = () => {
+        target.textContent = text.slice(0, ++i);
+        if (i < text.length) setTimeout(tick, step);
+      };
+      setTimeout(tick, 150);
+    });
 </script>

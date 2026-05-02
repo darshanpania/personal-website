@@ -1,5 +1,6 @@
 ---
 import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
 import { getCollection } from "astro:content";
 
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
@@ -17,9 +18,10 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
 ---
 
 <Base title="writing — Darshan Pania" description="Essays on engineering leadership, mobile SDKs, and side projects.">
-  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
-    writing
-  </h1>
+  <TypingName
+    text="writing"
+    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
+  />
 
   <div
     id="category-pills"

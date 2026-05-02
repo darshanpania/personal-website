@@ -1,5 +1,6 @@
 ---
 import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
 
 const PATENT_URL =
   "https://patents.google.com/patent/US12470637B2/en?oq=US12470637B2";
@@ -113,9 +114,10 @@ const speaking: SpeakingEntry[] = [
 ---
 
 <Base title="resume — Darshan Pania" description="Engineering leadership, mobile SDKs, AI-native developer tooling. 13+ years.">
-  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
-    resume
-  </h1>
+  <TypingName
+    text="resume"
+    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
+  />
 
   <p class="mt-6 text-(--text-secondary) text-base leading-7">
     Engineering leader with 13+ years building mobile platforms, customer-engagement

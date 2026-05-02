@@ -62,9 +62,11 @@ body {
   color: var(--bg);
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 .fade-in {

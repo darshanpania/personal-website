@@ -1,5 +1,6 @@
 ---
 import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
 
 const links = [
   { label: "darshanpania@gmail.com", href: "mailto:darshanpania@gmail.com" },
@@ -10,9 +11,10 @@ const links = [
 ---
 
 <Base title="contact — Darshan Pania" description="Reach out by email, Twitter, LinkedIn, or GitHub.">
-  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
-    contact
-  </h1>
+  <TypingName
+    text="contact"
+    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
+  />
 
   <p class="mt-6 text-(--text-secondary) leading-7">
     The best way to reach me is email. I'm also fairly active on Twitter and
