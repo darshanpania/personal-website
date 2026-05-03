@@ -50,7 +50,7 @@ const ogImageAbsolute = new URL(ogImage ?? "/images/Darshan_Pic.jpg", siteBase).
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageAbsolute} />
     <meta name="twitter:creator" content="@i_m_Pania" />
-    {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
+    {jsonLd && <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />}
     <title>{title}</title>
     <script is:inline>
       (() => {
