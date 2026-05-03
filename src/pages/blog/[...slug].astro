@@ -1,5 +1,6 @@
 ---
 import Base from "@/layouts/Base.astro";
+import SocialIcon from "@/components/SocialIcon.astro";
 import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -19,9 +20,19 @@ const readMinutes = Math.max(1, Math.round(wordCount / wordsPerMinute));
 
 const fmt = (d: Date) =>
   `${d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+const pageUrl = Astro.url.href;
+const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(pageUrl)}`;
+const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
 ---
 
-<Base title={`${post.data.title} — Darshan Pania`} description={post.data.description}>
+<Base
+  title={`${post.data.title} — Darshan Pania`}
+  description={post.data.description}
+  ogType="article"
+  ogImage={post.data.coverImage}
+  publishedTime={post.data.date}
+>
   <a
     href="/blog"
     class="font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
@@ -30,6 +41,13 @@ const fmt = (d: Date) =>
   </a>
 
   <article class="mt-8">
+    {post.data.coverImage && (
+      <img
+        src={post.data.coverImage}
+        alt={post.data.title}
+        class="w-full aspect-video rounded-lg object-cover mb-8"
+      />
+    )}
     <h1 class="text-xl md:text-[1.5625rem] font-medium text-(--text-primary) leading-tight">
       {post.data.title}
     </h1>
@@ -40,8 +58,62 @@ const fmt = (d: Date) =>
     <div class="prose-custom mt-10">
       <Content />
     </div>
+
+    <div class="mt-12 pt-8 border-t border-(--border) flex items-center gap-1">
+      <span class="font-mono text-sm text-(--text-secondary) mr-2">share</span>
+
+      <a
+        href={tweetUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Share on X (Twitter)"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+      >
+        <SocialIcon network="twitter" class="w-4 h-4" />
+      </a>
+
+      <a
+        href={linkedInUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Share on LinkedIn"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+      >
+        <SocialIcon network="linkedin" class="w-4 h-4" />
+      </a>
+
+      <button
+        id="copy-url-btn"
+        aria-label="Copy link"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+      >
+        <svg id="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        <svg id="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4 hidden text-(--mono-accent)">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </button>
+    </div>
   </article>
 </Base>
+
+<script>
+  const btn = document.getElementById("copy-url-btn");
+  const copyIcon = document.getElementById("copy-icon");
+  const checkIcon = document.getElementById("check-icon");
+
+  btn?.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    copyIcon?.classList.add("hidden");
+    checkIcon?.classList.remove("hidden");
+    setTimeout(() => {
+      copyIcon?.classList.remove("hidden");
+      checkIcon?.classList.add("hidden");
+    }, 2000);
+  });
+</script>
 
 <style is:global>
   .prose-custom {
@@ -110,5 +182,9 @@ const fmt = (d: Date) =>
     border: 0;
     border-top: 1px solid var(--border);
     margin: 2em 0;
+  }
+  .prose-custom img {
+    max-width: 100%;
+    height: auto;
   }
 </style>
