@@ -8,6 +8,7 @@ interface Props {
   ogType?: "website" | "article";
   ogImage?: string;
   publishedTime?: Date;
+  jsonLd?: string;
 }
 
 const {
@@ -16,11 +17,12 @@ const {
   ogType = "website",
   ogImage,
   publishedTime,
+  jsonLd,
 } = Astro.props;
 
 const siteBase = Astro.site ?? new URL("https://darshanpania.me");
 const canonical = new URL(Astro.url.pathname, siteBase).href;
-const ogImageAbsolute = ogImage ? new URL(ogImage, siteBase).href : undefined;
+const ogImageAbsolute = new URL(ogImage ?? "/images/Darshan_Pic.jpg", siteBase).href;
 ---
 
 <!doctype html>
@@ -29,18 +31,26 @@ const ogImageAbsolute = ogImage ? new URL(ogImage, siteBase).href : undefined;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content={description} />
+    <meta name="author" content="Darshan Pania" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content={ogType} />
-    {ogImageAbsolute && <meta property="og:image" content={ogImageAbsolute} />}
-    {ogType === "article" && publishedTime && (
-      <meta property="article:published_time" content={publishedTime.toISOString()} />
-    )}
-    <meta name="twitter:card" content={ogImageAbsolute ? "summary_large_image" : "summary"} />
-    {ogImageAbsolute && <meta name="twitter:image" content={ogImageAbsolute} />}
+    <meta property="og:image" content={ogImageAbsolute} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Darshan Pania" />
+    {publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
+    {publishedTime && <meta property="article:author" content="https://darshanpania.me" />}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageAbsolute} />
+    <meta name="twitter:creator" content="@i_m_Pania" />
+    {jsonLd && <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />}
     <title>{title}</title>
     <script is:inline>
       (() => {
