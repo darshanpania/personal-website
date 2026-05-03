@@ -26,7 +26,13 @@ const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(pos
 const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
 ---
 
-<Base title={`${post.data.title} — Darshan Pania`} description={post.data.description}>
+<Base
+  title={`${post.data.title} — Darshan Pania`}
+  description={post.data.description}
+  ogType="article"
+  ogImage={post.data.coverImage}
+  publishedTime={post.data.date}
+>
   <a
     href="/blog"
     class="font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"

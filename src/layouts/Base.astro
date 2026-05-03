@@ -5,14 +5,22 @@ import Header from "@/components/Header.astro";
 interface Props {
   title?: string;
   description?: string;
+  ogType?: "website" | "article";
+  ogImage?: string;
+  publishedTime?: Date;
 }
 
 const {
   title = "Darshan Pania",
   description = "Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and the occasional side project.",
+  ogType = "website",
+  ogImage,
+  publishedTime,
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://darshanpania.me").href;
+const siteBase = Astro.site ?? new URL("https://darshanpania.me");
+const canonical = new URL(Astro.url.pathname, siteBase).href;
+const ogImageAbsolute = ogImage ? new URL(ogImage, siteBase).href : undefined;
 ---
 
 <!doctype html>
@@ -26,8 +34,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://darshanpani
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:type" content={ogType} />
+    {ogImageAbsolute && <meta property="og:image" content={ogImageAbsolute} />}
+    {ogType === "article" && publishedTime && (
+      <meta property="article:published_time" content={publishedTime.toISOString()} />
+    )}
+    <meta name="twitter:card" content={ogImageAbsolute ? "summary_large_image" : "summary"} />
+    {ogImageAbsolute && <meta name="twitter:image" content={ogImageAbsolute} />}
     <title>{title}</title>
     <script is:inline>
       (() => {
