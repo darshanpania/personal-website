@@ -38,9 +38,8 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
     {post.data.coverImage && (
       <img
         src={post.data.coverImage}
-        alt=""
-        class="w-full rounded-lg object-cover mb-8"
-        style="max-height: 420px;"
+        alt={post.data.title}
+        class="w-full aspect-video rounded-lg object-cover mb-8"
       />
     )}
     <h1 class="text-xl md:text-[1.5625rem] font-medium text-(--text-primary) leading-tight">
@@ -62,7 +61,7 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on X (Twitter)"
-        class="p-2 rounded-md text-(--text-secondary) hover:text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
       >
         <SocialIcon network="twitter" class="w-4 h-4" />
       </a>
@@ -72,7 +71,7 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on LinkedIn"
-        class="p-2 rounded-md text-(--text-secondary) hover:text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
       >
         <SocialIcon network="linkedin" class="w-4 h-4" />
       </a>
@@ -80,7 +79,7 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
       <button
         id="copy-url-btn"
         aria-label="Copy link"
-        class="p-2 rounded-md text-(--text-secondary) hover:text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
       >
         <svg id="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -103,11 +102,9 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
     await navigator.clipboard.writeText(window.location.href);
     copyIcon?.classList.add("hidden");
     checkIcon?.classList.remove("hidden");
-    btn.classList.add("text-(--mono-accent)");
     setTimeout(() => {
       copyIcon?.classList.remove("hidden");
       checkIcon?.classList.add("hidden");
-      btn.classList.remove("text-(--mono-accent)");
     }, 2000);
   });
 </script>
