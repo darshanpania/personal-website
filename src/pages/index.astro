@@ -103,7 +103,7 @@ const socials = [
         >
           <SocialIcon network={s.network} />
           {s.label}
-          <span aria-hidden class="ml-0.5">↗</span>
+          <span aria-hidden="true" class="ml-0.5">↗</span>
         </a>
       ))
     }
@@ -127,7 +127,7 @@ const socials = [
                 {p.title}
                 {p.external && (
                   <span
-                    aria-hidden
+                    aria-hidden="true"
                     class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
                   >
                     ↗
@@ -146,7 +146,7 @@ const socials = [
       href="/blog"
       class="inline-block mt-4 font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
     >
-      all posts <span aria-hidden>→</span>
+      all posts <span aria-hidden="true">→</span>
     </a>
   </section>
 </Base>
