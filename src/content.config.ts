@@ -23,6 +23,7 @@ const posts = defineCollection({
     date: z.coerce.date(),
     category: z.enum(["tech", "fiction", "non-fiction"]),
     description: z.string().optional(),
+    coverImage: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });

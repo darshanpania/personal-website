@@ -30,6 +30,14 @@ const fmt = (d: Date) =>
   </a>
 
   <article class="mt-8">
+    {post.data.coverImage && (
+      <img
+        src={post.data.coverImage}
+        alt=""
+        class="w-full rounded-lg object-cover mb-8"
+        style="max-height: 420px;"
+      />
+    )}
     <h1 class="text-xl md:text-[1.5625rem] font-medium text-(--text-primary) leading-tight">
       {post.data.title}
     </h1>
