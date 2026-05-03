@@ -28,6 +28,7 @@ const links = [
         links.map(({ href, label }) => (
           <a
             href={href}
+            aria-current={isActive(href) ? "page" : undefined}
             class={`transition-colors ${
               isActive(href)
                 ? "text-(--text-primary) font-medium"

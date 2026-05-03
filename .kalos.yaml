@@ -12,7 +12,7 @@ tokens:
       error: "#DC2626"
       info: "#3d5a80"
   typography:
-    font_family: "Geist, system-ui, sans-serif"
+    font_family: "Geist Sans, system-ui, sans-serif"
     scale: "1.25"
     base_size: 16
   spacing:

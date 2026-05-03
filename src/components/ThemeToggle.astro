@@ -4,6 +4,7 @@
   id="theme-toggle"
   type="button"
   aria-label="Toggle theme"
+  aria-pressed="false"
   class="text-text-secondary hover:text-text-primary transition-colors text-sm"
 >
   <span class="inline-block w-4 h-4 align-middle">
@@ -28,13 +29,18 @@
       document.documentElement.classList.toggle("dark", isDark);
       sun?.classList.toggle("hidden", isDark);
       moon?.classList.toggle("hidden", !isDark);
+      btn?.setAttribute("aria-pressed", String(isDark));
     };
 
     apply(document.documentElement.classList.contains("dark") ? "dark" : "light");
 
     btn?.addEventListener("click", () => {
       const next = document.documentElement.classList.contains("dark") ? "light" : "dark";
-      localStorage.setItem("theme", next);
+      try {
+        localStorage.setItem("theme", next);
+      } catch {
+        /* storage blocked — apply for the session anyway */
+      }
       apply(next);
     });
   })();

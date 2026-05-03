@@ -12,16 +12,19 @@ const {
 ---
 
 <h1 class:list={[className, "cursor-blink"]} data-typing-text={text}>
-  <span data-typing-target></span>
+  <span data-typing-target>{text}</span>
 </h1>
 
 <script>
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   document
     .querySelectorAll<HTMLElement>("[data-typing-text]")
     .forEach((host) => {
       const text = host.dataset.typingText ?? "";
       const target = host.querySelector<HTMLElement>("[data-typing-target]");
       if (!target || !text) return;
+      if (reduceMotion) return;
+      target.textContent = "";
       let i = 0;
       const step = Math.max(40, Math.floor(800 / text.length));
       const tick = () => {

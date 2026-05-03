@@ -11,8 +11,8 @@ const { href, title, date, monoDate = true, dateFormat = "year-month" } = Astro.
 
 const formatted =
   dateFormat === "year-month"
-    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-    : `${date.toLocaleString("en-US", { month: "short" })} ${date.getFullYear()}`;
+    ? `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`
+    : `${date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${date.getUTCFullYear()}`;
 ---
 
 <a

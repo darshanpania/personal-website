@@ -31,12 +31,20 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? "https://darshanpani
     <title>{title}</title>
     <script is:inline>
       (() => {
-        const stored = localStorage.getItem("theme");
+        let stored = null;
+        try {
+          stored = localStorage.getItem("theme");
+        } catch {
+          /* storage blocked — fall back to system preference */
+        }
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         const theme = stored ?? (prefersDark ? "dark" : "light");
         if (theme === "dark") document.documentElement.classList.add("dark");
       })();
     </script>
+    <noscript>
+      <style>.fade-in { opacity: 1 !important; transform: none !important; }</style>
+    </noscript>
   </head>
   <body>
     <Header />

@@ -23,7 +23,7 @@ npm run preview  # preview the built site
 
 ## Project layout
 
-```
+```text
 src/
   layouts/Base.astro          shared HTML shell, sticky header, fade-in observer, no-flash theme script
   components/                 Header, ThemeToggle, TypingName (animated headings), SocialIcon (inline brand SVGs), PostRow

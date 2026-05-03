@@ -18,7 +18,7 @@ const wordCount = post.body?.split(/\s+/).length ?? 0;
 const readMinutes = Math.max(1, Math.round(wordCount / wordsPerMinute));
 
 const fmt = (d: Date) =>
-  `${d.toLocaleString("en-US", { month: "short" })} ${d.getDate()}, ${d.getFullYear()}`;
+  `${d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 ---
 
 <Base title={`${post.data.title} — Darshan Pania`} description={post.data.description}>

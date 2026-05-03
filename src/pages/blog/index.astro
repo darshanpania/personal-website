@@ -36,7 +36,7 @@ const entries: Entry[] = [
 
 const grouped: Record<string, Entry[]> = {};
 for (const e of entries) {
-  const year = e.date.getFullYear().toString();
+  const year = e.date.getUTCFullYear().toString();
   (grouped[year] ??= []).push(e);
 }
 const years = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
@@ -100,8 +100,8 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
                       )}
                     </span>
                     <span class="font-mono text-xs text-(--text-secondary) shrink-0">
-                      {e.date.toLocaleString("en-US", { month: "short" })}{" "}
-                      {e.date.getFullYear()}
+                      {e.date.toLocaleString("en-US", { month: "short", timeZone: "UTC" })}{" "}
+                      {e.date.getUTCFullYear()}
                     </span>
                   </a>
                 </li>
