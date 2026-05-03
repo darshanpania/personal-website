@@ -32,6 +32,19 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   ogType="article"
   ogImage={post.data.coverImage}
   publishedTime={post.data.date}
+  jsonLd={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.data.title,
+    "description": post.data.description ?? "",
+    "datePublished": post.data.date.toISOString(),
+    "author": {
+      "@type": "Person",
+      "name": "Darshan Pania",
+      "url": "https://darshanpania.me",
+    },
+    "url": new URL(`/blog/${post.id}`, Astro.site ?? "https://darshanpania.me").href,
+  })}
 >
   <a
     href="/blog"

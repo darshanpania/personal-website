@@ -1,0 +1,33 @@
+# Darshan Pania
+
+> Director of Engineering at CleverTap. I build mobile SDKs and engineering teams.
+> 13+ years on mobile platforms, customer-engagement infrastructure, and AI-native developer tooling.
+> I write about engineering leadership, AI workflows, mobile development, and sci-fi.
+
+## Pages
+
+- [Home](https://darshanpania.me/): Introduction and recent writing
+- [Writing](https://darshanpania.me/blog): All posts — tech, fiction, and non-fiction
+- [Projects](https://darshanpania.me/projects): Side projects across mobile and web
+- [Resume](https://darshanpania.me/resume): Work history, education, patents, and speaking
+- [Contact](https://darshanpania.me/contact): Email, calendar, and social links
+
+## Writing (selected)
+
+- [The Liberation Project: Part II — Open Source Savior](https://lostmeanderingthoughts.substack.com/p/the-liberation-project-part-ii-open): Sci-fi — AI agents, token economy, open-source activism
+- [The Liberation Project: Part 1 — The Token Heir](https://lostmeanderingthoughts.substack.com/p/the-liberation-project-part-1-the): Sci-fi — inherited wealth in a monetised AI economy
+- [Creating Push Notifications in Android O — Part 1](https://tech.clevertap.com/creating-push-notifications-in-android-o-part-1/): Technical guide on Android notification channels
+- [Creating Push Notifications in Android O — Part 2](https://tech.clevertap.com/creating-push-notifications-in-android-o-part-2/): Technical guide on notification styles and groups
+- [Custom Layouts for your Push Notification](https://medium.com/android-news/custom-layouts-for-your-push-notification-d8219d9962e): Android deep-dive on custom RemoteViews in notifications
+
+## Projects
+
+- [FPLGuru](https://fplguru.com): AI-powered Fantasy Premier League assistant — React frontend, Python/RAG backend, Pinecone vector store, GPT-4o
+- [Raindrop.io MCP Server](https://github.com/darshanpania/raindrop-io-mcp-server): MCP server exposing Raindrop.io bookmark management to LLM agents over HTTP/SSE
+- [Notificity](https://github.com/darshanpania/Notificity): Android app for capturing and categorising push notifications — Kotlin, Jetpack Compose, MVVM, open-source
+- [RainSurfer](https://rainsurfer.darshanpania.me): Web app to rediscover saved Raindrop.io articles — OAuth 2.0, random article surfacing
+
+## Optional
+
+- [Patent: RenderMax push notification platform (US12470637B2)](https://patents.google.com/patent/US12470637B2/en?oq=US12470637B2): Co-inventor, granted
+- [GDG DevFest Ahmedabad 2019 — Developing Android Libraries](https://www.youtube.com/watch?v=j8ZiTi7CVDM): Conference talk recording
