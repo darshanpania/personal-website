@@ -1,0 +1,47 @@
+---
+---
+<button
+  id="theme-toggle"
+  type="button"
+  aria-label="Toggle theme"
+  aria-pressed="false"
+  class="text-text-secondary hover:text-text-primary transition-colors text-sm"
+>
+  <span class="inline-block w-4 h-4 align-middle">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4 sun-icon">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round" />
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 moon-icon hidden">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  </span>
+</button>
+
+<script is:inline>
+  (() => {
+    const btn = document.getElementById("theme-toggle");
+    const sun = btn?.querySelector(".sun-icon");
+    const moon = btn?.querySelector(".moon-icon");
+
+    const apply = (theme) => {
+      const isDark = theme === "dark";
+      document.documentElement.classList.toggle("dark", isDark);
+      sun?.classList.toggle("hidden", isDark);
+      moon?.classList.toggle("hidden", !isDark);
+      btn?.setAttribute("aria-pressed", String(isDark));
+    };
+
+    apply(document.documentElement.classList.contains("dark") ? "dark" : "light");
+
+    btn?.addEventListener("click", () => {
+      const next = document.documentElement.classList.contains("dark") ? "light" : "dark";
+      try {
+        localStorage.setItem("theme", next);
+      } catch {
+        /* storage blocked — apply for the session anyway */
+      }
+      apply(next);
+    });
+  })();
+</script>

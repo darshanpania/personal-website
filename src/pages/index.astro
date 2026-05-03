@@ -1,0 +1,152 @@
+---
+import Base from "@/layouts/Base.astro";
+import TypingName from "@/components/TypingName.astro";
+import SocialIcon from "@/components/SocialIcon.astro";
+import { getCollection } from "astro:content";
+
+interface Entry {
+  title: string;
+  date: Date;
+  href: string;
+  external: boolean;
+}
+
+const externals = await getCollection("blog");
+const locals = await getCollection("posts", ({ data }) => !data.draft);
+
+const recent: Entry[] = [
+  ...externals.map((p) => ({
+    title: p.data.title,
+    date: p.data.date,
+    href: p.data.url,
+    external: true,
+  })),
+  ...locals.map((p) => ({
+    title: p.data.title,
+    date: p.data.date,
+    href: `/blog/${p.id}`,
+    external: false,
+  })),
+]
+  .sort((a, b) => b.date.getTime() - a.date.getTime())
+  .slice(0, 3);
+
+const fmt = (d: Date) =>
+  `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+
+const socials = [
+  {
+    network: "github" as const,
+    label: "github",
+    href: "https://github.com/darshanpania",
+  },
+  {
+    network: "linkedin" as const,
+    label: "linkedin",
+    href: "https://linkedin.com/in/darshanpania",
+  },
+  {
+    network: "twitter" as const,
+    label: "twitter",
+    href: "https://twitter.com/i_m_Pania",
+  },
+  {
+    network: "substack" as const,
+    label: "substack",
+    href: "https://lostmeanderingthoughts.substack.com/",
+  },
+];
+---
+
+<Base
+  title="Darshan Pania"
+  description="Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and AI-native developer tooling."
+>
+  <section class="space-y-2">
+    <TypingName text="Darshan Pania" />
+    <p class="text-(--mono-accent) text-base">
+      Director of Engineering @ CleverTap
+    </p>
+  </section>
+
+  <hr class="my-8 border-0 border-t border-(--border) w-10" />
+
+  <section class="space-y-4 fade-in">
+    <p class="text-(--text-primary) text-base leading-7">
+      I build mobile SDKs and engineering teams at <a
+        href="https://clevertap.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-(--mono-accent) hover:underline underline-offset-4"
+        >CleverTap</a
+      >. 13+ years working on the infrastructure that powers engagement and
+      retention for thousands of apps all over the world.
+    </p>
+    <p class="text-(--text-primary) text-base leading-7">
+      I love tinkering with AI tools, brewing my own coffee, listening to music
+      from all over the world, writing sci-fi, and following Arsenal FC.
+    </p>
+    <p class="text-(--text-primary) text-base leading-7">
+      I write about engineering leadership, AI workflows, mobile development,
+      and the occasional sci-fi story.
+    </p>
+  </section>
+
+  <section class="mt-8 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm fade-in">
+    {
+      socials.map((s) => (
+        <a
+          href={s.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-(--mono-accent) hover:underline underline-offset-4"
+        >
+          <SocialIcon network={s.network} />
+          {s.label}
+          <span aria-hidden="true" class="ml-0.5">↗</span>
+        </a>
+      ))
+    }
+  </section>
+
+  <section class="mt-14 fade-in">
+    <h2 class="font-mono text-xs uppercase tracking-wider text-(--text-secondary) mb-4">
+      recent writing
+    </h2>
+    <ul class="divide-y divide-(--border)">
+      {
+        recent.map((p) => (
+          <li>
+            <a
+              href={p.href}
+              target={p.external ? "_blank" : undefined}
+              rel={p.external ? "noopener noreferrer" : undefined}
+              class="group flex items-baseline justify-between gap-4 py-3"
+            >
+              <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+                {p.title}
+                {p.external && (
+                  <span
+                    aria-hidden="true"
+                    class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
+                  >
+                    ↗
+                  </span>
+                )}
+              </span>
+              <span class="font-mono text-xs text-(--text-secondary) shrink-0">
+                {fmt(p.date)}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <a
+      href="/blog"
+      class="inline-block mt-4 font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      all posts <span aria-hidden="true">→</span>
+    </a>
+  </section>
+</Base>

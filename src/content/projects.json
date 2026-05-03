@@ -1,0 +1,34 @@
+[
+  {
+    "id": "fplguru",
+    "name": "FPLGuru",
+    "platform": "web",
+    "description": "An AI-powered Fantasy Premier League assistant. React frontend on AWS S3, Python backend on Railway, RAG pipeline that re-embeds player data each gameweek using GPT-4o and Pinecone. Currently exploring fine-tuning Gemma-class models for FPL-specific strategy (chip timing, wildcards) beyond what stat-based retrieval handles well.",
+    "link": "https://fplguru.com",
+    "order": 1
+  },
+  {
+    "id": "raindrop-mcp",
+    "name": "Raindrop.io MCP Server",
+    "platform": "web",
+    "description": "An MCP server that exposes Raindrop.io bookmark management to LLM agents over HTTP/SSE. Built and presented at internal community events; now part of my personal and team workflows for AI-assisted knowledge management. Deployed to Railway with GitHub Actions CI/CD.",
+    "link": "https://github.com/darshanpania/raindrop-io-mcp-server",
+    "order": 2
+  },
+  {
+    "id": "notificity",
+    "name": "Notificity",
+    "platform": "android",
+    "description": "An Android app that captures and categorises every incoming push notification, with search by app or keyword. Built originally as a debugging tool during SDK development at CleverTap, then open-sourced as an architecture reference for the Android community. MVVM, Kotlin Coroutines and Flows, Jetpack Compose, Hilt, Robolectric, JUnit, Mockk. Six external contributors and counting.",
+    "link": "https://github.com/darshanpania/Notificity",
+    "order": 3
+  },
+  {
+    "id": "rainsurfer",
+    "name": "RainSurfer",
+    "platform": "web",
+    "description": "A web app that helps you rediscover articles you saved on Raindrop.io. Pick a collection, see a random article preview, then read it, mark it done, or skip to the next. OAuth 2.0 against the Raindrop API.",
+    "link": "https://rainsurfer.darshanpania.me",
+    "order": 4
+  }
+]

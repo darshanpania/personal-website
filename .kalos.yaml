@@ -1,0 +1,62 @@
+extends: minimal
+version: 0.2.0
+
+tokens:
+  colors:
+    primary: "#18130e"
+    secondary: "#7c736a"
+    neutral: "stone"
+    semantic:
+      success: "#16A34A"
+      warning: "#CA8A04"
+      error: "#DC2626"
+      info: "#3d5a80"
+  typography:
+    font_family: "Geist Sans, system-ui, sans-serif"
+    scale: "1.25"
+    base_size: 16
+  spacing:
+    base: 4
+    scale: [0, 1, 2, 3, 4, 6, 8, 12, 16, 24]
+  radii:
+    none: 0
+    sm: 2
+    md: 6
+    lg: 12
+    full: 9999
+
+rules:
+  colors:
+    max_unique: 12
+    require_semantic: true
+  typography:
+    max_font_families: 2
+    require_scale: true
+  spacing:
+    require_base_unit: true
+  accessibility:
+    min_contrast: 4.5
+    require_alt_text: true
+
+adapters:
+  - tailwind
+
+brands:
+  active: light
+  palettes:
+    light:
+      colors:
+        bg: "#faf8f5"
+        surface: "#f0ede8"
+        border: "#ddd8d0"
+        text-primary: "#18130e"
+        text-secondary: "#7c736a"
+        mono-accent: "#3d5a80"
+    dark:
+      colors:
+        bg: "#131516"
+        surface: "#1c1f21"
+        border: "#2c3035"
+        text-primary: "#e4e6e8"
+        text-secondary: "#7a8390"
+        mono-accent: "#7eb8a4"
