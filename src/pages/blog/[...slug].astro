@@ -128,6 +128,17 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   });
 </script>
 
+<script
+  is:inline
+  define:vars={{
+    slug: post.id,
+    title: post.data.title,
+    category: post.data.category,
+  }}
+>
+  window.posthog?.capture?.("blog_post_view", { slug, title, category });
+</script>
+
 <style is:global>
   .prose-custom {
     color: var(--text-primary);
