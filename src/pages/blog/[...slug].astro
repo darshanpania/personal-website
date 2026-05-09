@@ -1,6 +1,8 @@
 ---
 import Base from "@/layouts/Base.astro";
 import SocialIcon from "@/components/SocialIcon.astro";
+import NewsletterInline from "@/components/NewsletterInline.astro";
+import NewsletterModal from "@/components/NewsletterModal.astro";
 import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -109,8 +111,11 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         </svg>
       </button>
     </div>
+
+    <NewsletterInline />
   </article>
-</Base>
+
+  <NewsletterModal /></Base>
 
 <script>
   const btn = document.getElementById("copy-url-btn");
@@ -137,6 +142,13 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   }}
 >
   window.posthog?.capture?.("blog_post_view", { slug, title, category });
+  window.__POST__ = { slug, category };
+</script>
+
+<script>
+  import { initNewsletter } from "@/scripts/newsletter";
+  const post = (window as unknown as { __POST__?: { slug: string; category: string } }).__POST__;
+  if (post) initNewsletter(post);
 </script>
 
 <style is:global>
