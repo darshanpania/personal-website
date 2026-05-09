@@ -10,6 +10,7 @@ export function isValidEmail(value: unknown): value is string {
 
 export type SubscribeBody = {
   email: string;
+  firstName: string;
   source: "modal" | "inline";
   slug: string;
   website: string;
@@ -29,10 +30,13 @@ export function parseBody(raw: unknown): ParsedBody {
   const website = typeof r.website === "string" ? r.website : "";
   if (website.length > 0) return { ok: false, error: "honeypot" };
 
+  const firstName =
+    typeof r.firstName === "string" ? r.firstName.trim().slice(0, 100) : "";
+
   const source: SubscribeBody["source"] = r.source === "modal" ? "modal" : "inline";
   const slug = typeof r.slug === "string" ? r.slug.slice(0, 200) : "";
 
-  return { ok: true, body: { email, source, slug, website: "" } };
+  return { ok: true, body: { email, firstName, source, slug, website: "" } };
 }
 
 // Best-effort in-memory rate limit. Resets on cold start, which is acceptable
@@ -72,6 +76,7 @@ export type AutoSendResult =
 
 export async function callAutoSend(
   email: string,
+  firstName: string,
   deps: AutoSendDeps,
 ): Promise<AutoSendResult> {
   const fetchImpl = deps.fetchImpl ?? fetch;
@@ -85,7 +90,15 @@ export async function callAutoSend(
         Authorization: `Bearer ${deps.apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, listIds: [deps.listId] }),
+      // Always include firstName/lastName so the upsert overwrites any stale
+      // values (e.g. left over from someone hitting AutoSend's docs playground
+      // with the example "Jane Smith" payload).
+      body: JSON.stringify({
+        email,
+        firstName,
+        lastName: "",
+        listIds: [deps.listId],
+      }),
       signal: controller.signal,
     });
 

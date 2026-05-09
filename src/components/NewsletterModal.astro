@@ -49,6 +49,17 @@
         class="mt-4 flex flex-col gap-2"
         novalidate
       >
+        <label class="sr-only" for="newsletter-modal-firstname">first name (optional)</label>
+        <input
+          id="newsletter-modal-firstname"
+          data-newsletter-firstname
+          type="text"
+          name="firstName"
+          autocomplete="given-name"
+          maxlength="100"
+          placeholder="first name (optional)"
+          class="rounded-md border border-(--border) bg-(--surface) px-3 py-2 font-mono text-sm text-(--text-primary) placeholder:text-(--text-secondary) focus:border-(--mono-accent) focus:outline-none"
+        />
         <label class="sr-only" for="newsletter-modal-email">email</label>
         <input
           id="newsletter-modal-email"

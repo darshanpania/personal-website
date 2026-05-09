@@ -56,11 +56,13 @@ async function submit(
   slug: string,
 ): Promise<void> {
   const emailInput = root.querySelector<HTMLInputElement>("[data-newsletter-email]");
+  const firstNameInput = root.querySelector<HTMLInputElement>("[data-newsletter-firstname]");
   const honeypot = root.querySelector<HTMLInputElement>("[data-newsletter-website]");
   const submitBtn = root.querySelector<HTMLButtonElement>("[data-newsletter-submit]");
   if (!emailInput || !submitBtn) return;
 
   const email = emailInput.value.trim();
+  const firstName = firstNameInput?.value.trim() ?? "";
   if (!email) {
     setStatus(root, "an email would help.", "error");
     return;
@@ -79,6 +81,7 @@ async function submit(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
+        firstName,
         source,
         slug,
         website: honeypot?.value ?? "",

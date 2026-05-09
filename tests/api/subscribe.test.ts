@@ -60,7 +60,7 @@ describe("parseBody", () => {
     }
   });
 
-  it("accepts a well-formed body", () => {
+  it("accepts a well-formed body and defaults firstName to empty", () => {
     const result = parseBody({
       email: "reader@example.com",
       source: "modal",
@@ -71,11 +71,34 @@ describe("parseBody", () => {
       ok: true,
       body: {
         email: "reader@example.com",
+        firstName: "",
         source: "modal",
         slug: "post",
         website: "",
       },
     });
+  });
+
+  it("trims and length-caps firstName", () => {
+    const result = parseBody({
+      email: "reader@example.com",
+      firstName: "  Darshan  ",
+      source: "modal",
+      slug: "post",
+      website: "",
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.body.firstName).toBe("Darshan");
+
+    const long = parseBody({
+      email: "reader@example.com",
+      firstName: "x".repeat(500),
+      source: "modal",
+      slug: "post",
+      website: "",
+    });
+    expect(long.ok).toBe(true);
+    if (long.ok) expect(long.body.firstName.length).toBe(100);
   });
 
   it("rejects non-object input", () => {
@@ -123,18 +146,18 @@ describe("callAutoSend", () => {
   it("returns ok on a 2xx response", async () => {
     const fetchMock = (async () =>
       new Response(JSON.stringify({ id: "abc" }), { status: 200 })) as typeof fetch;
-    const result = await callAutoSend("reader@example.com", deps(fetchMock));
+    const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
     expect(result).toEqual({ ok: true });
   });
 
-  it("forwards email + listId in the body and bearer auth in headers", async () => {
+  it("forwards email + listId + name fields and bearer auth", async () => {
     let captured: { url: string; init: RequestInit } | null = null;
     const fetchMock = (async (url: string, init: RequestInit) => {
       captured = { url, init };
       return new Response("{}", { status: 200 });
     }) as unknown as typeof fetch;
 
-    await callAutoSend("reader@example.com", deps(fetchMock));
+    await callAutoSend("reader@example.com", "Darshan", deps(fetchMock));
     expect(captured).not.toBeNull();
     expect(captured!.url).toBe("https://api.autosend.com/v1/contacts/email");
     const headers = captured!.init.headers as Record<string, string>;
@@ -142,6 +165,24 @@ describe("callAutoSend", () => {
     expect(headers["Content-Type"]).toBe("application/json");
     expect(JSON.parse(captured!.init.body as string)).toEqual({
       email: "reader@example.com",
+      firstName: "Darshan",
+      lastName: "",
+      listIds: ["list-123"],
+    });
+  });
+
+  it("always sends lastName empty even when firstName is blank", async () => {
+    let captured: RequestInit | null = null;
+    const fetchMock = (async (_url: string, init: RequestInit) => {
+      captured = init;
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    await callAutoSend("reader@example.com", "", deps(fetchMock));
+    expect(JSON.parse(captured!.body as string)).toEqual({
+      email: "reader@example.com",
+      firstName: "",
+      lastName: "",
       listIds: ["list-123"],
     });
   });
@@ -149,14 +190,14 @@ describe("callAutoSend", () => {
   it("maps a 4xx upstream response to invalid_email", async () => {
     const fetchMock = (async () =>
       new Response("bad email", { status: 400 })) as typeof fetch;
-    const result = await callAutoSend("reader@example.com", deps(fetchMock));
+    const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
     expect(result).toEqual({ ok: false, error: "invalid_email" });
   });
 
   it("maps a 5xx upstream response to upstream", async () => {
     const fetchMock = (async () =>
       new Response("server boom", { status: 502 })) as typeof fetch;
-    const result = await callAutoSend("reader@example.com", deps(fetchMock));
+    const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
     expect(result).toEqual({ ok: false, error: "upstream" });
   });
 
@@ -164,7 +205,7 @@ describe("callAutoSend", () => {
     const fetchMock = (async () => {
       throw new Error("connection refused");
     }) as typeof fetch;
-    const result = await callAutoSend("reader@example.com", deps(fetchMock));
+    const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
     expect(result).toEqual({ ok: false, error: "upstream" });
   });
 });

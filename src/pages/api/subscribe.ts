@@ -40,7 +40,10 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(502, { ok: false, error: "upstream" });
   }
 
-  const result = await callAutoSend(parsed.body.email, { apiKey, listId });
+  const result = await callAutoSend(parsed.body.email, parsed.body.firstName, {
+    apiKey,
+    listId,
+  });
   if (result.ok) return json(200, { ok: true });
   if (result.error === "invalid_email") {
     return json(400, { ok: false, error: "invalid_email" });
