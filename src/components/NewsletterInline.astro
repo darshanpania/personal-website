@@ -1,0 +1,87 @@
+---
+// Inline footer signup card. Always rendered at the end of a blog post.
+// Wiring is handled by src/scripts/newsletter.ts via data-newsletter="inline".
+---
+
+<section
+  data-newsletter="inline"
+  class="mt-12 rounded-lg border border-(--border) bg-(--surface) p-6"
+  aria-labelledby="newsletter-inline-heading"
+>
+  <div data-newsletter-form-wrap>
+    <h2
+      id="newsletter-inline-heading"
+      class="text-base font-medium text-(--text-primary)"
+    >
+      get the next one in your inbox
+    </h2>
+    <p class="mt-2 text-sm text-(--text-secondary) leading-relaxed">
+      engineering, sci-fi, the occasional rant. one email when a new post drops,
+      none in between. no spam, no list-sharing, unsubscribe in one click.
+    </p>
+
+    <form
+      data-newsletter-form
+      class="mt-4 flex flex-col gap-2"
+      novalidate
+    >
+      <label class="sr-only" for="newsletter-inline-firstname">first name (optional)</label>
+      <input
+        id="newsletter-inline-firstname"
+        data-newsletter-firstname
+        type="text"
+        name="firstName"
+        autocomplete="given-name"
+        maxlength="100"
+        placeholder="first name (optional)"
+        class="rounded-md border border-(--border) bg-(--bg) px-3 py-2 font-mono text-sm text-(--text-primary) placeholder:text-(--text-secondary) focus:border-(--mono-accent) focus:outline-none"
+      />
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <label class="sr-only" for="newsletter-inline-email">email</label>
+        <input
+          id="newsletter-inline-email"
+          data-newsletter-email
+          type="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="you@example.com"
+          class="flex-1 rounded-md border border-(--border) bg-(--bg) px-3 py-2 font-mono text-sm text-(--text-primary) placeholder:text-(--text-secondary) focus:border-(--mono-accent) focus:outline-none"
+        />
+        <input
+          data-newsletter-website
+          type="text"
+          name="website"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+          style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;"
+        />
+        <button
+          data-newsletter-submit
+          type="submit"
+          class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+        >
+          subscribe
+        </button>
+      </div>
+    </form>
+
+    <p
+      data-newsletter-status
+      role="status"
+      aria-live="polite"
+      class="mt-2 min-h-[1.25rem] font-mono text-xs text-(--text-secondary)"
+    ></p>
+  </div>
+
+  <div
+    data-newsletter-success
+    class="hidden text-sm text-(--text-primary)"
+  >
+    <p class="font-mono text-(--mono-accent)">✓ you're in.</p>
+    <p class="mt-1 text-(--text-secondary)">
+      check your inbox to confirm. then go read something else.
+    </p>
+  </div>
+</section>
