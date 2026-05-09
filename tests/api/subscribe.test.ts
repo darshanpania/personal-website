@@ -150,7 +150,7 @@ describe("callAutoSend", () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it("forwards email + listId + name fields and bearer auth", async () => {
+  it("includes firstName when provided; bearer auth in headers", async () => {
     let captured: { url: string; init: RequestInit } | null = null;
     const fetchMock = (async (url: string, init: RequestInit) => {
       captured = { url, init };
@@ -166,12 +166,11 @@ describe("callAutoSend", () => {
     expect(JSON.parse(captured!.init.body as string)).toEqual({
       email: "reader@example.com",
       firstName: "Darshan",
-      lastName: "",
       listIds: ["list-123"],
     });
   });
 
-  it("always sends lastName empty even when firstName is blank", async () => {
+  it("omits firstName entirely when blank (avoids AutoSend Jane/Smith default)", async () => {
     let captured: RequestInit | null = null;
     const fetchMock = (async (_url: string, init: RequestInit) => {
       captured = init;
@@ -179,12 +178,13 @@ describe("callAutoSend", () => {
     }) as unknown as typeof fetch;
 
     await callAutoSend("reader@example.com", "", deps(fetchMock));
-    expect(JSON.parse(captured!.body as string)).toEqual({
+    const body = JSON.parse(captured!.body as string);
+    expect(body).toEqual({
       email: "reader@example.com",
-      firstName: "",
-      lastName: "",
       listIds: ["list-123"],
     });
+    expect(body).not.toHaveProperty("firstName");
+    expect(body).not.toHaveProperty("lastName");
   });
 
   it("maps a 4xx upstream response to invalid_email", async () => {

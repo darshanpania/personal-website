@@ -84,21 +84,23 @@ export async function callAutoSend(
   const timer = setTimeout(() => controller.abort(), deps.timeoutMs ?? 8000);
 
   try {
+    // Only include firstName when non-empty. AutoSend appears to treat an
+    // empty-string firstName as "no value, use placeholder defaults" and
+    // stores literal "Jane" / "Smith" on the contact record. We never
+    // collect lastName, so it's omitted entirely.
+    const payload: Record<string, unknown> = {
+      email,
+      listIds: [deps.listId],
+    };
+    if (firstName) payload.firstName = firstName;
+
     const res = await fetchImpl("https://api.autosend.com/v1/contacts/email", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${deps.apiKey}`,
         "Content-Type": "application/json",
       },
-      // Always include firstName/lastName so the upsert overwrites any stale
-      // values (e.g. left over from someone hitting AutoSend's docs playground
-      // with the example "Jane Smith" payload).
-      body: JSON.stringify({
-        email,
-        firstName,
-        lastName: "",
-        listIds: [deps.listId],
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
 
