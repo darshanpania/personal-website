@@ -1,0 +1,114 @@
+name: Send newsletter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/content/posts/**.md"
+      - "src/content/posts/**.mdx"
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Post slug (filename without extension)"
+        required: true
+        type: string
+      dry_run:
+        description: "Send to the dry-run list instead of subscribers"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve slugs to send
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_SLUG: ${{ github.event.inputs.slug }}
+          DISPATCH_DRY_RUN: ${{ github.event.inputs.dry_run }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            printf 'slugs<<EOF\n%s\nEOF\n' "$DISPATCH_SLUG" >> "$GITHUB_OUTPUT"
+            echo "dry_run=$DISPATCH_DRY_RUN" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Push event: find newly-added post files between the previous SHA
+          # and the current SHA. If BEFORE_SHA is the zero-SHA (initial push)
+          # or unreachable, fall back to comparing against the parent commit.
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            BEFORE_SHA="$AFTER_SHA^"
+          fi
+
+          added=$(git diff --name-only --diff-filter=A "$BEFORE_SHA" "$AFTER_SHA" -- \
+            'src/content/posts/*.md' 'src/content/posts/*.mdx' || true)
+
+          slugs=""
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            base=$(basename "$path")
+            slug="${base%.*}"
+            # Skip drafts: read frontmatter and look for `draft: true`.
+            if awk '/^---$/{c++; next} c==1 && /^draft:[[:space:]]*true[[:space:]]*$/{found=1} c==2{exit} END{exit !found}' "$path"; then
+              echo "Skipping draft: $slug"
+              continue
+            fi
+            slugs="${slugs}${slug}"$'\n'
+          done <<< "$added"
+
+          printf 'slugs<<EOF\n%sEOF\n' "$slugs" >> "$GITHUB_OUTPUT"
+          echo "dry_run=false" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for Vercel deployment
+        if: github.event_name == 'push' && steps.resolve.outputs.slugs != ''
+        run: |
+          # Give Vercel time to build and deploy the new post before we
+          # email subscribers a "read on the site" link that 404s.
+          echo "Waiting 180s for Vercel build to land..."
+          sleep 180
+
+      - name: Dispatch send-newsletter calls
+        if: steps.resolve.outputs.slugs != ''
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          SEND_NEWSLETTER_SECRET: ${{ secrets.SEND_NEWSLETTER_SECRET }}
+          DRY_RUN: ${{ steps.resolve.outputs.dry_run }}
+          SLUGS: ${{ steps.resolve.outputs.slugs }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SITE_URL:-}" ] || [ -z "${SEND_NEWSLETTER_SECRET:-}" ]; then
+            echo "::error::SITE_URL and SEND_NEWSLETTER_SECRET secrets must be set"
+            exit 1
+          fi
+          while IFS= read -r slug; do
+            [ -z "$slug" ] && continue
+            echo "Sending newsletter for slug=$slug dryRun=$DRY_RUN"
+            payload=$(printf '{"slug":"%s","dryRun":%s}' "$slug" "$DRY_RUN")
+            http_code=$(curl -sS -o /tmp/send-response.json -w "%{http_code}" \
+              -X POST "$SITE_URL/api/send-newsletter" \
+              -H "Authorization: Bearer $SEND_NEWSLETTER_SECRET" \
+              -H "Content-Type: application/json" \
+              --data "$payload")
+            echo "Response: $http_code"
+            cat /tmp/send-response.json || true
+            echo
+            if [ "$http_code" != "200" ]; then
+              echo "::error::send-newsletter call failed for $slug (HTTP $http_code)"
+              exit 1
+            fi
+          done <<< "$SLUGS"
