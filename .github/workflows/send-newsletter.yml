@@ -55,16 +55,19 @@ jobs:
             BEFORE_SHA="$AFTER_SHA^"
           fi
 
-          added=$(git diff --name-only --diff-filter=A "$BEFORE_SHA" "$AFTER_SHA" -- \
-            'src/content/posts/*.md' 'src/content/posts/*.mdx' || true)
+          # List newly-added .md/.mdx files anywhere under src/content/posts
+          # (workflow trigger globs are recursive; pathspec needs to match).
+          added=$(git diff --name-only --diff-filter=A "$BEFORE_SHA" "$AFTER_SHA" \
+            -- 'src/content/posts/' | grep -E '\.(md|mdx)$' || true)
 
           slugs=""
           while IFS= read -r path; do
             [ -z "$path" ] && continue
             base=$(basename "$path")
             slug="${base%.*}"
-            # Skip drafts: read frontmatter and look for `draft: true`.
-            if awk '/^---$/{c++; next} c==1 && /^draft:[[:space:]]*true[[:space:]]*$/{found=1} c==2{exit} END{exit !found}' "$path"; then
+            # Skip drafts: read frontmatter and look for any YAML-truthy
+            # `draft:` value (case-insensitive — `Draft: True`, `draft: yes`).
+            if awk '/^---$/{c++; next} c==1 && tolower($0) ~ /^draft:[[:space:]]*(true|yes|on|1)[[:space:]]*$/{found=1} c==2{exit} END{exit !found}' "$path"; then
               echo "Skipping draft: $slug"
               continue
             fi
