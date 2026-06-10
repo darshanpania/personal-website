@@ -1,6 +1,8 @@
 ---
 import "@/styles/global.css";
+import { ClientRouter } from "astro:transitions";
 import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
 
 interface Props {
   title?: string;
@@ -60,17 +62,27 @@ const posthogEnabled = import.meta.env.PROD && !!posthogKey;
     <meta name="twitter:creator" content="@i_m_Pania" />
     {jsonLd && <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />}
     <title>{title}</title>
+    <ClientRouter />
     <script is:inline>
       (() => {
-        let stored = null;
-        try {
-          stored = localStorage.getItem("theme");
-        } catch {
-          /* storage blocked — fall back to system preference */
-        }
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const theme = stored ?? (prefersDark ? "dark" : "light");
-        if (theme === "dark") document.documentElement.classList.add("dark");
+        document.documentElement.classList.add("js");
+        const resolveTheme = () => {
+          let stored = null;
+          try {
+            stored = localStorage.getItem("theme");
+          } catch {
+            /* storage blocked — fall back to system preference */
+          }
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          return stored ?? (prefersDark ? "dark" : "light");
+        };
+        const apply = () => {
+          document.documentElement.classList.add("js");
+          document.documentElement.classList.toggle("dark", resolveTheme() === "dark");
+        };
+        apply();
+        // View transitions replace <html> attributes — re-apply after each swap.
+        document.addEventListener("astro:after-swap", apply);
       })();
     </script>
     {posthogEnabled && (
@@ -85,7 +97,7 @@ const posthogEnabled = import.meta.env.PROD && !!posthogKey;
         posthog.init(phKey, {
           api_host: phHost,
           person_profiles: "identified_only",
-          capture_pageview: true,
+          capture_pageview: "history_change",
           capture_pageleave: true,
           respect_dnt: true,
         });
@@ -96,24 +108,39 @@ const posthogEnabled = import.meta.env.PROD && !!posthogKey;
     </noscript>
   </head>
   <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-(--bg) focus:px-3 focus:py-2 focus:font-mono focus:text-sm focus:text-(--mono-accent) focus:border focus:border-(--border)"
+    >
+      skip to content
+    </a>
     <Header />
-    <main class="mx-auto max-w-[640px] px-4 pt-12 pb-24">
+    <main id="main" class="mx-auto max-w-[640px] px-4 pt-12 pb-24">
       <slot />
     </main>
+    <Footer />
 
     <script>
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) {
-              e.target.classList.add("visible");
-              observer.unobserve(e.target);
-            }
-          });
-        },
-        { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-      );
-      document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+      const initFadeIns = () => {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            // Stagger elements that enter together for a gentle cascade.
+            entries
+              .filter((e) => e.isIntersecting)
+              .forEach((e, i) => {
+                (e.target as HTMLElement).style.setProperty(
+                  "--fade-delay",
+                  `${Math.min(i * 40, 160)}ms`,
+                );
+                e.target.classList.add("visible");
+                observer.unobserve(e.target);
+              });
+          },
+          { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+        );
+        document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+      };
+      document.addEventListener("astro:page-load", initFadeIns);
     </script>
   </body>
 </html>

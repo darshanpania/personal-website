@@ -1,0 +1,34 @@
+---
+import Base from "@/layouts/Base.astro";
+---
+
+<Base title="404 — Darshan Pania" description="Page not found.">
+  <section class="space-y-2">
+    <h1 class="font-mono text-2xl md:text-[2.25rem] font-medium text-(--text-primary) tracking-tight cursor-blink">
+      404
+    </h1>
+    <p class="text-(--mono-accent) text-base font-mono">page not found</p>
+  </section>
+
+  <hr class="my-8 border-0 border-t border-(--border) w-10" />
+
+  <p class="text-(--text-primary) text-base leading-7">
+    Whatever was here has been garbage-collected. Maybe it moved, maybe it
+    never existed, maybe you typed it from memory. Happens to the best of us.
+  </p>
+
+  <div class="mt-8 flex flex-wrap gap-x-6 gap-y-2 font-mono text-sm">
+    <a
+      href="/"
+      class="text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      <span aria-hidden="true" class="icon-back">←</span> home
+    </a>
+    <a
+      href="/blog"
+      class="text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      writing <span aria-hidden="true" class="icon-fwd">→</span>
+    </a>
+  </div>
+</Base>

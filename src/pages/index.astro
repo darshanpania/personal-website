@@ -113,11 +113,13 @@ const socials = [
           href={s.href}
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-1.5 text-(--mono-accent) hover:underline underline-offset-4"
+          class="group inline-flex items-center gap-1.5 text-(--mono-accent) hover:underline underline-offset-4"
         >
-          <SocialIcon network={s.network} />
+          <span class="transition-transform duration-150 group-hover:-translate-y-px motion-reduce:transform-none">
+            <SocialIcon network={s.network} />
+          </span>
           {s.label}
-          <span aria-hidden="true" class="ml-0.5">↗</span>
+          <span aria-hidden="true" class="ml-0.5 icon-ext">↗</span>
         </a>
       ))
     }
@@ -137,12 +139,12 @@ const socials = [
               rel={p.external ? "noopener noreferrer" : undefined}
               class="group flex items-baseline justify-between gap-4 py-3"
             >
-              <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+              <span class="inline-block text-(--text-primary) group-hover:text-(--mono-accent) transition-[color,transform] duration-150 group-hover:translate-x-1 motion-reduce:transform-none">
                 {p.title}
                 {p.external && (
                   <span
                     aria-hidden="true"
-                    class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
+                    class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors icon-ext"
                   >
                     ↗
                   </span>
@@ -160,7 +162,7 @@ const socials = [
       href="/blog"
       class="inline-block mt-4 font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
     >
-      all posts <span aria-hidden="true">→</span>
+      all posts <span aria-hidden="true" class="icon-fwd">→</span>
     </a>
   </section>
 </Base>

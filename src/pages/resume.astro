@@ -1,6 +1,5 @@
 ---
 import Base from "@/layouts/Base.astro";
-import TypingName from "@/components/TypingName.astro";
 
 const PATENT_URL =
   "https://patents.google.com/patent/US12470637B2/en?oq=US12470637B2";
@@ -114,10 +113,26 @@ const speaking: SpeakingEntry[] = [
 ---
 
 <Base title="resume — Darshan Pania" description="Engineering leadership, mobile SDKs, AI-native developer tooling. 13+ years.">
-  <TypingName
-    text="resume"
-    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
-  />
+  <div class="flex items-center justify-between gap-4">
+    <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+      resume
+    </h1>
+    <button
+      id="print-resume"
+      type="button"
+      class="no-print font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
+    >
+      print / pdf <span aria-hidden="true">↓</span>
+    </button>
+  </div>
+
+  <script>
+    document.addEventListener("click", (e) => {
+      if (e.target instanceof Element && e.target.closest("#print-resume")) {
+        window.print();
+      }
+    });
+  </script>
 
   <p class="mt-6 text-(--text-secondary) text-base leading-7">
     Engineering leader with 13+ years building mobile platforms, customer-engagement
@@ -134,7 +149,7 @@ const speaking: SpeakingEntry[] = [
       {
         experience.map((e) => (
           <article class="fade-in">
-            <div class="flex items-baseline justify-between gap-4">
+            <div class="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
               <h3 class="text-(--text-primary) font-medium">
                 {e.role} <span class="text-(--text-secondary)">— {e.company}</span>
               </h3>
@@ -159,7 +174,7 @@ const speaking: SpeakingEntry[] = [
     <div class="mt-6 space-y-5">
       {
         education.map((e) => (
-          <article class="flex items-baseline justify-between gap-4 fade-in">
+          <article class="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 fade-in">
             <h3 class="text-(--text-primary) font-medium">
               {e.degree}{" "}
               <span class="text-(--text-secondary) font-normal">— {e.institution}</span>
@@ -181,7 +196,7 @@ const speaking: SpeakingEntry[] = [
       {
         awards.map((a) => (
           <article class="fade-in">
-            <div class="flex items-baseline justify-between gap-4">
+            <div class="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
               <h3 class="text-(--text-primary) font-medium">
                 {a.link ? (
                   <a
@@ -190,7 +205,7 @@ const speaking: SpeakingEntry[] = [
                     rel="noopener noreferrer"
                     class="text-(--mono-accent) underline underline-offset-4 decoration-(--border) hover:decoration-(--mono-accent)"
                   >
-                    {a.title} <span aria-hidden="true" class="font-mono text-xs">↗</span>
+                    {a.title} <span aria-hidden="true" class="font-mono text-xs icon-ext">↗</span>
                   </a>
                 ) : (
                   a.title
@@ -215,7 +230,7 @@ const speaking: SpeakingEntry[] = [
       {
         speaking.map((s, i) => (
           <li
-            class={`flex items-baseline justify-between gap-4 py-3 border-(--border) fade-in ${
+            class={`flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 py-3 border-(--border) fade-in ${
               i < speaking.length - 1 ? "border-b" : ""
             }`}
           >
@@ -233,7 +248,7 @@ const speaking: SpeakingEntry[] = [
                     rel="noopener noreferrer"
                     class="font-mono text-xs text-(--mono-accent) hover:underline underline-offset-4"
                   >
-                    watch ↗
+                    watch <span aria-hidden="true" class="icon-ext">↗</span>
                   </a>
                 </>
               )}

@@ -1,6 +1,5 @@
 ---
 import Base from "@/layouts/Base.astro";
-import TypingName from "@/components/TypingName.astro";
 import { getCollection } from "astro:content";
 
 interface Entry {
@@ -45,10 +44,9 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
 ---
 
 <Base title="writing — Darshan Pania" description="Essays on engineering leadership, mobile SDKs, and side projects.">
-  <TypingName
-    text="writing"
-    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
-  />
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    writing
+  </h1>
 
   <div
     id="category-pills"
@@ -60,13 +58,21 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
         <button
           type="button"
           data-category={c}
-          class="pill px-3 py-1 rounded-full border border-(--border) text-(--text-secondary) transition-colors hover:text-(--text-primary)"
+          aria-pressed={c === "all" ? "true" : "false"}
+          class="pill px-3 py-1 rounded-full border border-(--border) text-(--text-secondary) transition-[color,background-color,border-color,transform] duration-150 hover:text-(--text-primary) active:scale-95 motion-reduce:transform-none"
         >
           {c}
         </button>
       ))
     }
   </div>
+
+  <p
+    id="filter-empty"
+    class="hidden mt-10 font-mono text-sm text-(--text-secondary)"
+  >
+    nothing here yet — still drafting<span class="cursor-blink"></span>
+  </p>
 
   <div class="mt-10 space-y-10">
     {
@@ -88,12 +94,12 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
                     rel={e.external ? "noopener noreferrer" : undefined}
                     class="group flex items-baseline justify-between gap-4 py-3"
                   >
-                    <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+                    <span class="inline-block text-(--text-primary) group-hover:text-(--mono-accent) transition-[color,transform] duration-150 group-hover:translate-x-1 motion-reduce:transform-none">
                       {e.title}
                       {e.external && (
                         <span
                           aria-hidden="true"
-                          class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors"
+                          class="ml-1 font-mono text-xs text-(--text-secondary) group-hover:text-(--mono-accent) transition-colors icon-ext"
                         >
                           ↗
                         </span>
@@ -114,36 +120,52 @@ const categories = ["all", "tech", "fiction", "non-fiction"] as const;
   </div>
 
   <script>
-    const container = document.getElementById("category-pills");
-    const pills = container?.querySelectorAll<HTMLButtonElement>(".pill");
-    const rows = document.querySelectorAll<HTMLLIElement>(".post-row");
-    const years = document.querySelectorAll<HTMLElement>("[data-year]");
+    const init = () => {
+      const container = document.getElementById("category-pills");
+      if (!container) return; // not on this page
+      const pills = container.querySelectorAll<HTMLButtonElement>(".pill");
+      const rows = document.querySelectorAll<HTMLLIElement>(".post-row");
+      const years = document.querySelectorAll<HTMLElement>("[data-year]");
+      const empty = document.getElementById("filter-empty");
 
-    const setActive = (cat: string) => {
-      pills?.forEach((p) => {
-        const active = p.dataset.category === cat;
-        p.classList.toggle("bg-(--text-primary)", active);
-        p.classList.toggle("text-(--bg)", active);
-        p.classList.toggle("border-(--text-primary)", active);
-        p.classList.toggle("text-(--text-secondary)", !active);
-      });
+      const setActive = (cat: string, animate: boolean) => {
+        pills.forEach((p) => {
+          const active = p.dataset.category === cat;
+          p.classList.toggle("bg-(--text-primary)", active);
+          p.classList.toggle("text-(--bg)", active);
+          p.classList.toggle("border-(--text-primary)", active);
+          p.classList.toggle("text-(--text-secondary)", !active);
+          p.setAttribute("aria-pressed", String(active));
+        });
 
-      rows.forEach((r) => {
-        const match = cat === "all" || r.dataset.category === cat;
-        r.classList.toggle("hidden", !match);
-      });
+        let visibleIndex = 0;
+        rows.forEach((r) => {
+          const match = cat === "all" || r.dataset.category === cat;
+          r.classList.toggle("hidden", !match);
+          r.classList.remove("row-reveal");
+          if (match && animate) {
+            r.style.animationDelay = `${Math.min(visibleIndex * 30, 240)}ms`;
+            r.classList.add("row-reveal");
+            visibleIndex++;
+          }
+        });
 
-      years.forEach((sec) => {
-        const visible = sec.querySelectorAll(".post-row:not(.hidden)").length > 0;
-        sec.classList.toggle("hidden", !visible);
-      });
+        let anyVisible = false;
+        years.forEach((sec) => {
+          const visible = sec.querySelectorAll(".post-row:not(.hidden)").length > 0;
+          sec.classList.toggle("hidden", !visible);
+          anyVisible ||= visible;
+        });
 
-      if (container) container.dataset.active = cat;
+        empty?.classList.toggle("hidden", anyVisible);
+        container.dataset.active = cat;
+      };
+
+      pills.forEach((p) =>
+        p.addEventListener("click", () => setActive(p.dataset.category!, true)),
+      );
+      setActive("all", false);
     };
-
-    pills?.forEach((p) =>
-      p.addEventListener("click", () => setActive(p.dataset.category!)),
-    );
-    setActive("all");
+    document.addEventListener("astro:page-load", init);
   </script>
 </Base>

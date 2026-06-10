@@ -16,21 +16,50 @@ const {
 </h1>
 
 <script>
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document
-    .querySelectorAll<HTMLElement>("[data-typing-text]")
-    .forEach((host) => {
-      const text = host.dataset.typingText ?? "";
-      const target = host.querySelector<HTMLElement>("[data-typing-target]");
-      if (!target || !text) return;
-      if (reduceMotion) return;
-      target.textContent = "";
-      let i = 0;
-      const step = Math.max(40, Math.floor(800 / text.length));
-      const tick = () => {
-        target.textContent = text.slice(0, ++i);
-        if (i < text.length) setTimeout(tick, step);
-      };
-      setTimeout(tick, 150);
-    });
+  const run = () => {
+    document
+      .querySelectorAll<HTMLElement>("[data-typing-text]")
+      .forEach((host) => {
+        const text = host.dataset.typingText ?? "";
+        const target = host.querySelector<HTMLElement>("[data-typing-target]");
+        if (!target || !text) return;
+
+        // Blink a few more beats after typing settles, then fade the cursor
+        // out so it stops competing with the rest of the page.
+        const settle = () => {
+          setTimeout(() => host.classList.add("cursor-done"), 2500);
+        };
+
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        const key = `typed:${text}`;
+        let alreadyTyped = false;
+        try {
+          alreadyTyped = sessionStorage.getItem(key) === "1";
+        } catch {
+          /* storage blocked — type every visit */
+        }
+        if (reduceMotion || alreadyTyped) {
+          settle();
+          return;
+        }
+        try {
+          sessionStorage.setItem(key, "1");
+        } catch {
+          /* storage blocked */
+        }
+
+        target.textContent = "";
+        let i = 0;
+        const step = Math.max(40, Math.floor(800 / text.length));
+        const tick = () => {
+          target.textContent = text.slice(0, ++i);
+          if (i < text.length) setTimeout(tick, step);
+          else settle();
+        };
+        setTimeout(tick, 150);
+      });
+  };
+  document.addEventListener("astro:page-load", run);
 </script>

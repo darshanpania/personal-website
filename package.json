@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@astrojs/mdx": "^4.0.0",
+    "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.2.1",
     "@astrojs/vercel": "^9.0.5",
     "@fontsource/geist-mono": "^5.1.0",

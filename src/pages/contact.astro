@@ -1,6 +1,5 @@
 ---
 import Base from "@/layouts/Base.astro";
-import TypingName from "@/components/TypingName.astro";
 import SocialIcon from "@/components/SocialIcon.astro";
 
 const reach = [
@@ -41,10 +40,9 @@ const elsewhere = [
 ---
 
 <Base title="contact — Darshan Pania" description="Reach me by email, schedule a call, or find me elsewhere on the internet.">
-  <TypingName
-    text="contact"
-    class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)"
-  />
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    contact
+  </h1>
 
   <p class="mt-6 text-(--text-primary) leading-7">
     Email if it's important. Cal.com if you want a half-hour of my undivided
@@ -64,11 +62,13 @@ const elsewhere = [
               href={l.href}
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel={l.href.startsWith("http") ? "noopener noreferrer" : undefined}
-              class="inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
+              class="group inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
             >
-              <SocialIcon network={l.network} />
+              <span class="transition-transform duration-150 group-hover:-translate-y-px motion-reduce:transform-none">
+                <SocialIcon network={l.network} />
+              </span>
               {l.label}
-              <span aria-hidden="true" class="ml-0.5">↗</span>
+              <span aria-hidden="true" class="ml-0.5 icon-ext">↗</span>
             </a>
           </li>
         ))
@@ -88,11 +88,13 @@ const elsewhere = [
               href={l.href}
               target="_blank"
               rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
+              class="group inline-flex items-center gap-2 text-(--mono-accent) hover:underline underline-offset-4"
             >
-              <SocialIcon network={l.network} />
+              <span class="transition-transform duration-150 group-hover:-translate-y-px motion-reduce:transform-none">
+                <SocialIcon network={l.network} />
+              </span>
               {l.label}
-              <span aria-hidden="true" class="ml-0.5">↗</span>
+              <span aria-hidden="true" class="ml-0.5 icon-ext">↗</span>
             </a>
           </li>
         ))
