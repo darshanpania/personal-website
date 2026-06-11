@@ -294,5 +294,13 @@ html.theme-transition *::after {
     --text-secondary: #444444;
     --mono-accent: #000000;
   }
-  header, .no-print { display: none !important; }
+  header, footer, #reading-progress, .no-print { display: none !important; }
+
+  /* Scroll-triggered reveals never fire for content below the fold when
+     printing — force everything visible so the PDF isn't blank past page 1. */
+  html.js .fade-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
