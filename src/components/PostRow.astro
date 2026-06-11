@@ -19,7 +19,7 @@ const formatted =
   href={href}
   class="group flex items-baseline justify-between gap-4 py-3 border-b border-(--border) last:border-b-0 fade-in"
 >
-  <span class="text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+  <span class="inline-block text-(--text-primary) group-hover:text-(--mono-accent) transition-[color,transform] duration-150 group-hover:translate-x-1 motion-reduce:transform-none">
     {title}
   </span>
   <span class={`text-xs ${monoDate ? "font-mono" : ""} text-(--text-secondary) shrink-0`}>

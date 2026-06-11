@@ -16,6 +16,15 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
+// Prev/next among local posts, newest first.
+const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const currentIndex = allPosts.findIndex((p) => p.id === post.id);
+const newerPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+const olderPost =
+  currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+
 const wordsPerMinute = 220;
 const wordCount = post.body?.split(/\s+/).length ?? 0;
 const readMinutes = Math.max(1, Math.round(wordCount / wordsPerMinute));
@@ -48,11 +57,13 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
     "url": new URL(`/blog/${post.id}`, Astro.site ?? "https://darshanpania.me").href,
   })}
 >
+  <div id="reading-progress" aria-hidden="true"></div>
+
   <a
     href="/blog"
     class="font-mono text-sm text-(--mono-accent) hover:underline underline-offset-4"
   >
-    <span aria-hidden="true">←</span> writing
+    <span aria-hidden="true" class="icon-back">←</span> writing
   </a>
 
   <article class="mt-8">
@@ -82,7 +93,7 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on X (Twitter)"
-        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-[background-color,transform] duration-150 hover:scale-110 active:scale-95 motion-reduce:transform-none"
       >
         <SocialIcon network="twitter" class="w-4 h-4" />
       </a>
@@ -92,7 +103,7 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on LinkedIn"
-        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-[background-color,transform] duration-150 hover:scale-110 active:scale-95 motion-reduce:transform-none"
       >
         <SocialIcon network="linkedin" class="w-4 h-4" />
       </a>
@@ -100,17 +111,61 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
       <button
         id="copy-url-btn"
         aria-label="Copy link"
-        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-colors"
+        class="p-2 rounded-md text-(--mono-accent) hover:bg-(--surface) transition-[background-color,transform] duration-150 hover:scale-110 active:scale-95 motion-reduce:transform-none"
       >
         <svg id="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
         </svg>
-        <svg id="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4 hidden text-(--mono-accent)">
+        <svg id="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="w-4 h-4 hidden check-draw text-(--mono-accent)">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
       </button>
+      <span
+        id="copy-feedback"
+        role="status"
+        aria-live="polite"
+        class="font-mono text-xs text-(--text-secondary) opacity-0 transition-opacity duration-200"
+      ></span>
     </div>
+
+    {(newerPost || olderPost) && (
+      <nav
+        aria-label="More posts"
+        class="mt-12 pt-8 border-t border-(--border) flex flex-col gap-3 sm:flex-row sm:justify-between sm:gap-8"
+      >
+        {olderPost ? (
+          <a
+            href={`/blog/${olderPost.id}`}
+            class="group flex-1 min-w-0"
+          >
+            <span class="font-mono text-xs text-(--text-secondary)">
+              <span aria-hidden="true" class="icon-back">←</span> older
+            </span>
+            <span class="mt-1 block text-sm text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+              {olderPost.data.title}
+            </span>
+          </a>
+        ) : (
+          <span class="flex-1" aria-hidden="true" />
+        )}
+        {newerPost ? (
+          <a
+            href={`/blog/${newerPost.id}`}
+            class="group flex-1 min-w-0 sm:text-right"
+          >
+            <span class="font-mono text-xs text-(--text-secondary)">
+              newer <span aria-hidden="true" class="icon-fwd">→</span>
+            </span>
+            <span class="mt-1 block text-sm text-(--text-primary) group-hover:text-(--mono-accent) transition-colors">
+              {newerPost.data.title}
+            </span>
+          </a>
+        ) : (
+          <span class="flex-1" aria-hidden="true" />
+        )}
+      </nav>
+    )}
 
     <NewsletterInline />
   </article>
@@ -118,19 +173,72 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   <NewsletterModal /></Base>
 
 <script>
-  const btn = document.getElementById("copy-url-btn");
-  const copyIcon = document.getElementById("copy-icon");
-  const checkIcon = document.getElementById("check-icon");
+  // Delegated so it keeps working after view-transition swaps.
+  document.addEventListener("click", async (e) => {
+    if (!(e.target instanceof Element) || !e.target.closest("#copy-url-btn")) return;
 
-  btn?.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    copyIcon?.classList.add("hidden");
-    checkIcon?.classList.remove("hidden");
+    const copyIcon = document.getElementById("copy-icon");
+    const checkIcon = document.getElementById("check-icon");
+    const feedback = document.getElementById("copy-feedback");
+
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      copied = true;
+    } catch {
+      // Clipboard API unavailable (e.g. non-secure context) — fall back.
+      const ta = document.createElement("textarea");
+      ta.value = window.location.href;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      }
+      ta.remove();
+    }
+
+    if (feedback) {
+      feedback.textContent = copied ? "copied" : "couldn't copy — grab the url bar";
+      feedback.classList.remove("opacity-0");
+    }
+    if (copied) {
+      copyIcon?.classList.add("hidden");
+      checkIcon?.classList.remove("hidden");
+    }
     setTimeout(() => {
       copyIcon?.classList.remove("hidden");
       checkIcon?.classList.add("hidden");
+      feedback?.classList.add("opacity-0");
     }, 2000);
   });
+</script>
+
+<script>
+  // Reading progress bar, scoped to blog post pages.
+  let ticking = false;
+  const updateProgress = () => {
+    ticking = false;
+    const bar = document.getElementById("reading-progress");
+    if (!bar) return;
+    const denominator = document.body.scrollHeight - window.innerHeight;
+    const progress = denominator > 0 ? Math.min(window.scrollY / denominator, 1) : 0;
+    bar.style.transform = `scaleX(${progress})`;
+  };
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(updateProgress);
+      }
+    },
+    { passive: true },
+  );
+  document.addEventListener("astro:page-load", updateProgress);
 </script>
 
 <script
@@ -147,8 +255,13 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
 
 <script>
   import { initNewsletter } from "@/scripts/newsletter";
-  const post = (window as unknown as { __POST__?: { slug: string; category: string } }).__POST__;
-  if (post) initNewsletter(post);
+  const init = () => {
+    const post = (window as unknown as { __POST__?: { slug: string; category: string } }).__POST__;
+    // __POST__ is set by the per-page inline script above; only wire up when
+    // the current document is actually a blog post.
+    if (post && document.querySelector("[data-newsletter]")) initNewsletter(post);
+  };
+  document.addEventListener("astro:page-load", init);
 </script>
 
 <style is:global>

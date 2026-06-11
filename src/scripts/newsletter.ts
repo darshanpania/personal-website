@@ -35,11 +35,35 @@ function track(event: string, props: Record<string, unknown>) {
   (window as any).posthog?.capture?.(event, props);
 }
 
-function showSuccess(root: HTMLElement) {
+function showSuccess(root: HTMLElement, celebrate = false) {
   const formWrap = root.querySelector<HTMLElement>("[data-newsletter-form-wrap]");
   const success = root.querySelector<HTMLElement>("[data-newsletter-success]");
   if (formWrap) formWrap.classList.add("hidden");
-  if (success) success.classList.remove("hidden");
+  if (success) {
+    success.classList.remove("hidden");
+    // Pop the success card in only on a fresh signup, not when re-rendering
+    // the subscribed state on page load.
+    if (celebrate) success.classList.add("newsletter-pop");
+  }
+}
+
+function shakeInput(input: HTMLElement | null) {
+  if (!input) return;
+  input.classList.remove("input-shake");
+  // Force a reflow so the animation can replay on repeated errors.
+  void input.offsetWidth;
+  input.classList.add("input-shake");
+}
+
+function setLoading(btn: HTMLButtonElement, loading: boolean) {
+  btn.disabled = loading;
+  btn.setAttribute("aria-busy", String(loading));
+  if (loading) {
+    btn.dataset.label = btn.textContent ?? "subscribe";
+    btn.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+  } else {
+    btn.textContent = btn.dataset.label ?? "subscribe";
+  }
 }
 
 function setStatus(root: HTMLElement, message: string, tone: "info" | "error" = "info") {
@@ -65,10 +89,12 @@ async function submit(
   const firstName = firstNameInput?.value.trim() ?? "";
   if (!email) {
     setStatus(root, "an email would help.", "error");
+    shakeInput(emailInput);
+    emailInput.focus();
     return;
   }
 
-  submitBtn.disabled = true;
+  setLoading(submitBtn, true);
   setStatus(root, "subscribing…");
   track("newsletter_signup_attempt", { slug, source });
 
@@ -101,7 +127,7 @@ async function submit(
       // Update both surfaces if present (other surface may already be open).
       document
         .querySelectorAll<HTMLElement>('[data-newsletter]')
-        .forEach((el) => showSuccess(el));
+        .forEach((el) => showSuccess(el, true));
       // Close the modal after a beat so they can read the success card.
       if (source === "modal") {
         setTimeout(closeModal, 1500);
@@ -114,6 +140,7 @@ async function submit(
 
     if (reason === "invalid_email") {
       setStatus(root, "that email looks off — mind double-checking?", "error");
+      shakeInput(emailInput);
     } else if (reason === "rate_limited") {
       setStatus(root, "too many tries — give it a minute and try again.", "error");
     } else {
@@ -128,7 +155,7 @@ async function submit(
     setStatus(root, "something broke on my end. try again in a bit?", "error");
   } finally {
     clearTimeout(timer);
-    submitBtn.disabled = false;
+    setLoading(submitBtn, false);
   }
 }
 
@@ -152,9 +179,13 @@ function openModal(slug: string, category: string) {
   modal.classList.add("flex");
   modal.setAttribute("aria-hidden", "false");
 
-  // Focus first input.
-  const firstInput = modal.querySelector<HTMLInputElement>("[data-newsletter-email]");
-  firstInput?.focus();
+  // Focus the email input on hover-capable devices; on touch screens focus
+  // the dialog itself so the on-screen keyboard doesn't pop up uninvited.
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    modal.querySelector<HTMLInputElement>("[data-newsletter-email]")?.focus();
+  } else {
+    modal.querySelector<HTMLElement>("[data-newsletter-card]")?.focus();
+  }
 
   escHandler = (e: KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -227,6 +258,11 @@ function throttle<T extends (...args: never[]) => void>(fn: T, wait: number): T 
 
 // --- public init ----------------------------------------------------------
 
+// initNewsletter can run more than once per browsing session (view
+// transitions re-init on every post). Track the active scroll listener so a
+// stale closure from a previous post never opens the modal.
+let activeScrollHandler: (() => void) | null = null;
+
 export function initNewsletter({ slug, category }: Init): void {
   const globallySubscribed = readFlag(KEY_GLOBAL) === "subscribed";
   const perSlug = readFlag(keyForSlug(slug));
@@ -262,6 +298,10 @@ export function initNewsletter({ slug, category }: Init): void {
   }
 
   // Scroll trigger (modal only).
+  if (activeScrollHandler) {
+    window.removeEventListener("scroll", activeScrollHandler);
+    activeScrollHandler = null;
+  }
   if (globallySubscribed || perSlug === "subscribed" || perSlug === "dismissed") {
     return;
   }
@@ -277,9 +317,11 @@ export function initNewsletter({ slug, category }: Init): void {
     const scrolled = window.scrollY / denominator;
     if (scrolled >= 0.5) {
       window.removeEventListener("scroll", onScroll);
+      if (activeScrollHandler === onScroll) activeScrollHandler = null;
       openModal(slug, category);
     }
   }, 150);
 
+  activeScrollHandler = onScroll;
   window.addEventListener("scroll", onScroll, { passive: true });
 }

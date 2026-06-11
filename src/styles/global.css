@@ -7,12 +7,22 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Only apply hover: utilities on devices that can actually hover, so taps
+   on touch screens never leave stuck hover states behind. */
+@custom-variant hover {
+  @media (hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 :root {
   --bg: #faf8f5;
   --surface: #f0ede8;
   --border: #ddd8d0;
   --text-primary: #18130e;
-  --text-secondary: #7c736a;
+  --text-secondary: #6e655c;
   --mono-accent: #3d5a80;
 }
 
@@ -67,17 +77,42 @@ body {
     color: inherit;
     text-decoration: none;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--mono-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 }
 
-.fade-in {
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+/* Smooth color shift when the theme toggle flips. Applied transiently by
+   ThemeToggle so colors never animate on initial page load. */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 250ms ease-out,
+    border-color 250ms ease-out,
+    color 250ms ease-out !important;
 }
 
-.fade-in.visible {
-  opacity: 1;
-  transform: translateY(0);
+/* Hidden state only applies when JS is running (html.js set in <head>),
+   so content is never invisible on slow connections or with JS disabled. */
+@media (prefers-reduced-motion: no-preference) {
+  html.js .fade-in {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+      opacity 250ms ease-out,
+      transform 250ms ease-out;
+    transition-delay: var(--fade-delay, 0ms);
+  }
+
+  html.js .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .cursor-blink::after {
@@ -86,10 +121,167 @@ body {
   animation: blink 1s steps(1) infinite;
   color: var(--mono-accent);
   font-weight: 400;
+  transition: opacity 600ms ease-out;
+}
+
+/* Once typing finishes, the cursor bows out. */
+.cursor-done::after {
+  opacity: 0;
 }
 
 @keyframes blink {
   50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-blink::after {
+    animation: none;
+  }
+}
+
+/* Directional nudges for the arrow glyphs (↗ → ←) inside links. */
+.icon-ext,
+.icon-fwd,
+.icon-back {
+  display: inline-block;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .icon-ext,
+  .icon-fwd,
+  .icon-back {
+    transition: transform 150ms ease-out;
+  }
+
+  a:hover .icon-ext,
+  .group:hover .icon-ext {
+    transform: translate(2px, -2px);
+  }
+
+  a:hover .icon-fwd,
+  .group:hover .icon-fwd {
+    transform: translateX(3px);
+  }
+
+  a:hover .icon-back,
+  .group:hover .icon-back {
+    transform: translateX(-3px);
+  }
+}
+
+/* Row reveal when re-filtering the writing list. */
+@media (prefers-reduced-motion: no-preference) {
+  .row-reveal {
+    animation: row-reveal 250ms ease-out backwards;
+  }
+}
+
+@keyframes row-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Newsletter: success pop, error shake, button spinner. */
+@media (prefers-reduced-motion: no-preference) {
+  .newsletter-pop {
+    animation: pop-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  }
+
+  .input-shake {
+    animation: shake 300ms ease-in-out;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 9999px;
+  vertical-align: -2px;
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Newsletter modal entrance. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-newsletter="modal"]:not(.hidden) [data-newsletter-backdrop] {
+    animation: backdrop-in 200ms ease-out backwards;
+  }
+
+  [data-newsletter="modal"]:not(.hidden) [data-newsletter-card] {
+    animation: card-in 250ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Copy-link checkmark stroke draw. */
+@media (prefers-reduced-motion: no-preference) {
+  .check-draw polyline {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: check-draw 300ms ease-out 50ms forwards;
+  }
+}
+
+@keyframes check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Reading progress bar on blog posts. */
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--mono-accent);
+  transform-origin: left;
+  transform: scaleX(0);
+  z-index: 60;
+  pointer-events: none;
 }
 
 @media print {
@@ -102,5 +294,13 @@ body {
     --text-secondary: #444444;
     --mono-accent: #000000;
   }
-  header, .no-print { display: none !important; }
+  header, footer, #reading-progress, .no-print { display: none !important; }
+
+  /* Scroll-triggered reveals never fire for content below the fold when
+     printing — force everything visible so the PDF isn't blank past page 1. */
+  html.js .fade-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }

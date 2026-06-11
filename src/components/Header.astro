@@ -17,10 +17,13 @@ const links = [
 
 <header
   id="site-header"
-  class="sticky top-0 z-50 border-b border-(--border) bg-(--bg)/80 backdrop-blur supports-[backdrop-filter]:bg-(--bg)/70"
+  class="sticky top-0 z-50 border-b border-transparent bg-(--bg)/80 backdrop-blur supports-[backdrop-filter]:bg-(--bg)/70 transition-[border-color] duration-200"
 >
   <div class="mx-auto max-w-[640px] px-4 py-3 flex items-center justify-between gap-4">
-    <a href="/" class="font-mono text-sm text-(--mono-accent) tracking-tight">
+    <a
+      href="/"
+      class="font-mono text-sm text-(--mono-accent) tracking-tight py-2 -my-2"
+    >
       darshan pania
     </a>
     <nav aria-label="Main" class="flex items-center gap-5 text-sm">
@@ -29,7 +32,7 @@ const links = [
           <a
             href={href}
             aria-current={isActive(href) ? "page" : undefined}
-            class={`transition-colors ${
+            class={`nav-link py-2 -my-2 transition-colors ${
               isActive(href)
                 ? "text-(--text-primary) font-medium"
                 : "text-(--text-secondary) hover:text-(--text-primary)"
@@ -43,3 +46,48 @@ const links = [
     </nav>
   </div>
 </header>
+
+<style>
+  .nav-link {
+    position: relative;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 4px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .nav-link[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-link::after {
+      transition: transform 200ms ease-out;
+    }
+  }
+  @media (hover: hover) {
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
+  }
+  #site-header[data-scrolled="true"] {
+    border-bottom-color: var(--border);
+  }
+</style>
+
+<script>
+  // Module scripts run once; query the header lazily so the handler keeps
+  // working after view transitions replace the element.
+  const update = () => {
+    document
+      .getElementById("site-header")
+      ?.setAttribute("data-scrolled", String(window.scrollY > 8));
+  };
+  window.addEventListener("scroll", update, { passive: true });
+  document.addEventListener("astro:page-load", update);
+</script>

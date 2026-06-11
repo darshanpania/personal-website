@@ -18,7 +18,9 @@
   ></div>
 
   <div
-    class="relative w-full max-w-sm rounded-lg border border-(--border) bg-(--bg) p-6 shadow-2xl"
+    data-newsletter-card
+    tabindex="-1"
+    class="relative w-full max-w-sm rounded-lg border border-(--border) bg-(--bg) p-6 shadow-2xl outline-none"
   >
     <button
       data-newsletter-close
@@ -83,7 +85,7 @@
         <button
           data-newsletter-submit
           type="submit"
-          class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+          class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-[opacity,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none"
         >
           subscribe
         </button>
