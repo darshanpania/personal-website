@@ -7,6 +7,16 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Only apply hover: utilities on devices that can actually hover, so taps
+   on touch screens never leave stuck hover states behind. */
+@custom-variant hover {
+  @media (hover: hover) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
 :root {
   --bg: #faf8f5;
   --surface: #f0ede8;
@@ -136,7 +146,7 @@ html.theme-transition *::after {
   display: inline-block;
 }
 
-@media (prefers-reduced-motion: no-preference) {
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .icon-ext,
   .icon-fwd,
   .icon-back {

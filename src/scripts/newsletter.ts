@@ -179,9 +179,13 @@ function openModal(slug: string, category: string) {
   modal.classList.add("flex");
   modal.setAttribute("aria-hidden", "false");
 
-  // Focus first input.
-  const firstInput = modal.querySelector<HTMLInputElement>("[data-newsletter-email]");
-  firstInput?.focus();
+  // Focus the email input on hover-capable devices; on touch screens focus
+  // the dialog itself so the on-screen keyboard doesn't pop up uninvited.
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    modal.querySelector<HTMLInputElement>("[data-newsletter-email]")?.focus();
+  } else {
+    modal.querySelector<HTMLElement>("[data-newsletter-card]")?.focus();
+  }
 
   escHandler = (e: KeyboardEvent) => {
     if (e.key === "Escape") {

@@ -70,8 +70,10 @@ const links = [
       transition: transform 200ms ease-out;
     }
   }
-  .nav-link:hover::after {
-    transform: scaleX(1);
+  @media (hover: hover) {
+    .nav-link:hover::after {
+      transform: scaleX(1);
+    }
   }
   #site-header[data-scrolled="true"] {
     border-bottom-color: var(--border);
