@@ -123,6 +123,12 @@ html.theme-transition *::after {
   50% { opacity: 0; }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .cursor-blink::after {
+    animation: none;
+  }
+}
+
 /* Directional nudges for the arrow glyphs (↗ → ←) inside links. */
 .icon-ext,
 .icon-fwd,

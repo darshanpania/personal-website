@@ -127,11 +127,14 @@ const speaking: SpeakingEntry[] = [
   </div>
 
   <script>
-    document.addEventListener("click", (e) => {
-      if (e.target instanceof Element && e.target.closest("#print-resume")) {
-        window.print();
-      }
-    });
+    // Re-bind on every navigation; the button element is fresh after each
+    // view-transition swap, so this can never attach duplicate listeners.
+    const bind = () => {
+      document
+        .getElementById("print-resume")
+        ?.addEventListener("click", () => window.print());
+    };
+    document.addEventListener("astro:page-load", bind);
   </script>
 
   <p class="mt-6 text-(--text-secondary) text-base leading-7">
