@@ -7,7 +7,12 @@ import vercel from "@astrojs/vercel";
 export default defineConfig({
   site: "https://darshanpania.me",
   adapter: vercel(),
-  integrations: [mdx(), sitemap()],
+  integrations: [
+    mdx(),
+    sitemap({
+      filter: (page) => !page.includes("/newsletter/"),
+    }),
+  ],
   vite: {
     plugins: [tailwindcss()],
   },

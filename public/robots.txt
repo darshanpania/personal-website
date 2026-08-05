@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /newsletter/
 
 Sitemap: https://darshanpania.me/sitemap-index.xml
