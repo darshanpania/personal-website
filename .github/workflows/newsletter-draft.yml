@@ -1,0 +1,62 @@
+name: newsletter-draft
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/content/posts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect added posts
+        id: added
+        run: |
+          BEFORE="${{ github.event.before }}"
+          # First push / force push edge case: fall back to the parent commit.
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            BEFORE="$(git rev-parse HEAD^)"
+          fi
+          ADDED=$(git diff --diff-filter=A --name-only "$BEFORE" "${{ github.sha }}" -- 'src/content/posts/*.md' 'src/content/posts/*.mdx' || true)
+          SLUGS=$(echo "$ADDED" | sed -E 's|.*/([^/]+)\.(md\|mdx)$|\1|' | grep -v '^$' | tr '\n' ' ')
+          echo "slugs=$SLUGS" >> "$GITHUB_OUTPUT"
+          echo "Added post slugs: ${SLUGS:-none}"
+
+      - name: Set up Node
+        if: steps.added.outputs.slugs != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install and build
+        if: steps.added.outputs.slugs != ''
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create draft campaigns
+        if: steps.added.outputs.slugs != ''
+        env:
+          AUTOSEND_API_KEY: ${{ secrets.AUTOSEND_API_KEY }}
+          AUTOSEND_LIST_ID: ${{ secrets.AUTOSEND_LIST_ID }}
+          AUTOSEND_SENDER_ID: ${{ secrets.AUTOSEND_SENDER_ID }}
+          AUTOSEND_SENDER_EMAIL: ${{ secrets.AUTOSEND_SENDER_EMAIL }}
+          AUTOSEND_UNSUB_GROUP_ID: ${{ secrets.AUTOSEND_UNSUB_GROUP_ID }}
+          NEWSLETTER_TEST_EMAIL: ${{ secrets.NEWSLETTER_TEST_EMAIL }}
+        run: |
+          FAILED=0
+          for SLUG in ${{ steps.added.outputs.slugs }}; do
+            echo "::group::drafting $SLUG"
+            node scripts/newsletter-draft.mjs "$SLUG" || FAILED=1
+            echo "::endgroup::"
+          done
+          exit $FAILED
