@@ -30,7 +30,11 @@ const preheader = post.data.description ?? "";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
     <title>{post.data.title}</title>
-    <style>
+    <!-- is:global: MDX content from <Content /> carries no data-astro-cid
+         scope attribute, so scoped selectors like `.post-body p` would never
+         match the post body and juice would inline nothing into it. This page
+         renders alone as an email, so global scope is safe. -->
+    <style is:global>
       body {
         margin: 0;
         padding: 0;
