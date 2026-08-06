@@ -2,10 +2,12 @@
 import * as cheerio from "cheerio";
 import juice from "juice";
 
-const SKIP_URL = /^(https?:|mailto:|tel:|#|\{\{)/;
+// Skip fragments, merge tags ({{unsubscribe}}), and anything with a scheme
+// (http, https, mailto, tel, data, cid, ...). Everything else resolves
+// against the post URL, which also normalizes protocol-relative //host paths.
+const SKIP_URL = /^(#|\{\{|[a-zA-Z][a-zA-Z0-9+.-]*:)/;
 
-export function transformEmailHtml(html, { siteUrl, postUrl }) {
-  const base = siteUrl.replace(/\/$/, "");
+export function transformEmailHtml(html, { postUrl }) {
   const $ = cheerio.load(html);
 
   $("script").remove();
@@ -20,7 +22,11 @@ export function transformEmailHtml(html, { siteUrl, postUrl }) {
     const $el = $(el);
     const val = $el.attr(attr);
     if (!val || SKIP_URL.test(val)) return;
-    $el.attr(attr, val.startsWith("/") ? `${base}${val}` : `${base}/${val}`);
+    try {
+      $el.attr(attr, new URL(val, postUrl).href);
+    } catch {
+      // Malformed URL — leave it untouched rather than corrupt it.
+    }
   };
   $("[href]").each(absolutize("href"));
   $("[src]").each(absolutize("src"));

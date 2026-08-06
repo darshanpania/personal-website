@@ -711,26 +711,27 @@ const unsubGroupId = env("AUTOSEND_UNSUB_GROUP_ID");
 const testEmail = env("NEWSLETTER_TEST_EMAIL");
 
 // --- idempotency check ------------------------------------------------
-const existing = await client.findCampaignByName(name);
-if (existing) {
+// Reuse an existing draft instead of exiting: if a prior run created the
+// campaign but died before the test email went out, the retry must still
+// send it.
+let campaign = await client.findCampaignByName(name);
+if (campaign) {
   console.log(
-    `[newsletter-draft] campaign "${name}" already exists (id ${existing.id}) — nothing to do`,
+    `[newsletter-draft] campaign "${name}" already exists (id ${campaign.id}) — skipping creation`,
   );
-  process.exit(0);
+} else {
+  campaign = await client.createDraftCampaign({
+    name,
+    subject,
+    previewText,
+    fromSenderId: senderId,
+    replyTo: REPLY_TO,
+    htmlTemplate: html,
+    listId,
+    unsubscribeGroupId: unsubGroupId,
+  });
+  console.log(`[newsletter-draft] created draft campaign id ${campaign.id}`);
 }
-
-// --- create draft + test email ---------------------------------------
-const campaign = await client.createDraftCampaign({
-  name,
-  subject,
-  previewText,
-  fromSenderId: senderId,
-  replyTo: REPLY_TO,
-  htmlTemplate: html,
-  listId,
-  unsubscribeGroupId: unsubGroupId,
-});
-console.log(`[newsletter-draft] created draft campaign id ${campaign.id}`);
 
 await client.sendTestEmail({
   toEmail: testEmail,
@@ -838,8 +839,15 @@ jobs:
             BEFORE="$(git rev-parse HEAD^)"
           fi
           ADDED=$(git diff --diff-filter=A --name-only "$BEFORE" "${{ github.sha }}" -- 'src/content/posts/*.md' 'src/content/posts/*.mdx' || true)
-          SLUGS=$(echo "$ADDED" | sed -E 's|.*/([^/]+)\.(md\|mdx)$|\1|' | grep -v '^$' | tr '\n' ' ')
-          echo "slugs=$SLUGS" >> "$GITHUB_OUTPUT"
+          # Slug = path minus prefix and extension; keeps nested paths intact.
+          SLUGS=$(printf '%s\n' "$ADDED" | sed -nE 's#^src/content/posts/(.+)\.(md|mdx)$#\1#p')
+          if [ -n "$SLUGS" ]; then
+            {
+              echo "slugs<<SLUGS_EOF"
+              printf '%s\n' "$SLUGS"
+              echo "SLUGS_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
           echo "Added post slugs: ${SLUGS:-none}"
 
       - name: Set up Node
@@ -864,13 +872,17 @@ jobs:
           AUTOSEND_SENDER_EMAIL: ${{ secrets.AUTOSEND_SENDER_EMAIL }}
           AUTOSEND_UNSUB_GROUP_ID: ${{ secrets.AUTOSEND_UNSUB_GROUP_ID }}
           NEWSLETTER_TEST_EMAIL: ${{ secrets.NEWSLETTER_TEST_EMAIL }}
+          # Passed via env, not interpolated into shell source: a committed
+          # filename must be data here, never code, in a secrets-bearing job.
+          SLUGS: ${{ steps.added.outputs.slugs }}
         run: |
           FAILED=0
-          for SLUG in ${{ steps.added.outputs.slugs }}; do
+          while IFS= read -r SLUG; do
+            [ -z "$SLUG" ] && continue
             echo "::group::drafting $SLUG"
             node scripts/newsletter-draft.mjs "$SLUG" || FAILED=1
             echo "::endgroup::"
-          done
+          done <<< "$SLUGS"
           exit $FAILED
 ```
 

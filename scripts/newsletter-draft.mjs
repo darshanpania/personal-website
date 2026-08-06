@@ -81,26 +81,27 @@ const unsubGroupId = env("AUTOSEND_UNSUB_GROUP_ID");
 const testEmail = env("NEWSLETTER_TEST_EMAIL");
 
 // --- idempotency check ------------------------------------------------
-const existing = await client.findCampaignByName(name);
-if (existing) {
+// Reuse an existing draft instead of exiting: if a prior run created the
+// campaign but died before the test email went out, the retry must still
+// send it.
+let campaign = await client.findCampaignByName(name);
+if (campaign) {
   console.log(
-    `[newsletter-draft] campaign "${name}" already exists (id ${existing.id}) — nothing to do`,
+    `[newsletter-draft] campaign "${name}" already exists (id ${campaign.id}) — skipping creation`,
   );
-  process.exit(0);
+} else {
+  campaign = await client.createDraftCampaign({
+    name,
+    subject,
+    previewText,
+    fromSenderId: senderId,
+    replyTo: REPLY_TO,
+    htmlTemplate: html,
+    listId,
+    unsubscribeGroupId: unsubGroupId,
+  });
+  console.log(`[newsletter-draft] created draft campaign id ${campaign.id}`);
 }
-
-// --- create draft + test email ---------------------------------------
-const campaign = await client.createDraftCampaign({
-  name,
-  subject,
-  previewText,
-  fromSenderId: senderId,
-  replyTo: REPLY_TO,
-  htmlTemplate: html,
-  listId,
-  unsubscribeGroupId: unsubGroupId,
-});
-console.log(`[newsletter-draft] created draft campaign id ${campaign.id}`);
 
 await client.sendTestEmail({
   toEmail: testEmail,

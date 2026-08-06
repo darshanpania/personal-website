@@ -35,6 +35,27 @@ describe("transformEmailHtml", () => {
     expect(out).toContain('href="{{unsubscribe}}"');
   });
 
+  it("resolves page-relative URLs against the post URL", () => {
+    const out = transformEmailHtml(page(`<a href="guide/">g</a>`), OPTS);
+    expect(out).toContain('href="https://darshanpania.me/blog/test-post/guide/"');
+  });
+
+  it("normalizes protocol-relative URLs without corrupting the host", () => {
+    const out = transformEmailHtml(
+      page(`<img src="//cdn.example.com/image.png">`),
+      OPTS,
+    );
+    expect(out).toContain('src="https://cdn.example.com/image.png"');
+  });
+
+  it("leaves data: URLs untouched", () => {
+    const out = transformEmailHtml(
+      page(`<img src="data:image/png;base64,AAAA">`),
+      OPTS,
+    );
+    expect(out).toContain('src="data:image/png;base64,AAAA"');
+  });
+
   it("inlines styles from the style block", () => {
     const out = transformEmailHtml(page(`<p>hello</p>`), OPTS);
     expect(out).toMatch(/<p style="[^"]*color:\s*#1a1a1a/);

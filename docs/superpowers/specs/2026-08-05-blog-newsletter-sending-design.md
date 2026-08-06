@@ -62,7 +62,7 @@ merge new post (src/content/posts/<slug>.mdx) to main
         3. for each added slug:
            node scripts/newsletter-draft.mjs <slug>
              ├── query Autosend campaigns for name "blog: <slug>"
-             │     exists → log + exit 0 (idempotent no-op)
+             │     exists → reuse draft (idempotent; test email still sent)
              ├── read dist/newsletter/<slug>/index.html
              ├── transform: absolutize URLs, inline CSS, strip scripts/embeds
              ├── create DRAFT campaign
@@ -141,7 +141,8 @@ re-run from the Actions UI thanks to the idempotency check.
   (no `/newsletter/` page is emitted), and the script double-checks frontmatter
   and skips them.
 - Secrets: `AUTOSEND_API_KEY`, `AUTOSEND_LIST_ID`, `AUTOSEND_SENDER_ID`,
-  `NEWSLETTER_TEST_EMAIL` (repository secrets, new-project values).
+  `AUTOSEND_SENDER_EMAIL`, `AUTOSEND_UNSUB_GROUP_ID`, `NEWSLETTER_TEST_EMAIL`
+  (repository secrets, new-project values).
 - Multiple posts in one push → loop, one campaign per slug; one slug failing
   doesn't stop the others (failures collected, workflow fails at the end).
 
@@ -163,7 +164,7 @@ re-run from the Actions UI thanks to the idempotency check.
 |---|---|---|
 | Vercel env (Prod/Preview/Dev) | `AUTOSEND_API_KEY` | new project's key |
 | Vercel env | `AUTOSEND_LIST_ID` | new project's `Website Blog` list id |
-| GitHub repo secrets | `AUTOSEND_API_KEY`, `AUTOSEND_LIST_ID`, `AUTOSEND_SENDER_ID`, `NEWSLETTER_TEST_EMAIL` | new |
+| GitHub repo secrets | `AUTOSEND_API_KEY`, `AUTOSEND_LIST_ID`, `AUTOSEND_SENDER_ID`, `AUTOSEND_SENDER_EMAIL`, `AUTOSEND_UNSUB_GROUP_ID`, `NEWSLETTER_TEST_EMAIL` | new |
 | `.env.example` | same four newsletter keys | documented |
 | `astro.config.mjs` | sitemap `filter` | exclude `/newsletter/` |
 | `public/robots.txt` | `Disallow: /newsletter/` | new line |
@@ -174,7 +175,7 @@ re-run from the Actions UI thanks to the idempotency check.
 | Failure | Behavior |
 |---|---|
 | Autosend API down / 5xx | Script exits non-zero → red run → GitHub notifies; re-run from Actions UI is safe (idempotent) |
-| Campaign already exists for slug | Log + exit 0 (expected on re-runs and edits) |
+| Campaign already exists for slug | Log + reuse the existing draft; test email still sent (expected on re-runs) |
 | Built HTML missing for slug (e.g. draft post) | Log + skip that slug, exit 0 |
 | Transform produces empty body | Exit non-zero before any Autosend call |
 | Test-email send fails after campaign created | Non-zero exit with clear message; draft still exists in dashboard (harmless — nothing sent to the list) |
