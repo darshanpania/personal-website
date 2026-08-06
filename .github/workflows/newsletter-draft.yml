@@ -1,0 +1,73 @@
+name: newsletter-draft
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/content/posts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect added posts
+        id: added
+        run: |
+          BEFORE="${{ github.event.before }}"
+          # First push / force push edge case: fall back to the parent commit.
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$BEFORE" 2>/dev/null; then
+            BEFORE="$(git rev-parse HEAD^)"
+          fi
+          ADDED=$(git diff --diff-filter=A --name-only "$BEFORE" "${{ github.sha }}" -- 'src/content/posts/*.md' 'src/content/posts/*.mdx' || true)
+          # Slug = path minus prefix and extension; keeps nested paths intact.
+          SLUGS=$(printf '%s\n' "$ADDED" | sed -nE 's#^src/content/posts/(.+)\.(md|mdx)$#\1#p')
+          if [ -n "$SLUGS" ]; then
+            {
+              echo "slugs<<SLUGS_EOF"
+              printf '%s\n' "$SLUGS"
+              echo "SLUGS_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+          echo "Added post slugs: ${SLUGS:-none}"
+
+      - name: Set up Node
+        if: steps.added.outputs.slugs != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install and build
+        if: steps.added.outputs.slugs != ''
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create draft campaigns
+        if: steps.added.outputs.slugs != ''
+        env:
+          AUTOSEND_API_KEY: ${{ secrets.AUTOSEND_API_KEY }}
+          AUTOSEND_LIST_ID: ${{ secrets.AUTOSEND_LIST_ID }}
+          AUTOSEND_SENDER_ID: ${{ secrets.AUTOSEND_SENDER_ID }}
+          AUTOSEND_SENDER_EMAIL: ${{ secrets.AUTOSEND_SENDER_EMAIL }}
+          AUTOSEND_UNSUB_GROUP_ID: ${{ secrets.AUTOSEND_UNSUB_GROUP_ID }}
+          NEWSLETTER_TEST_EMAIL: ${{ secrets.NEWSLETTER_TEST_EMAIL }}
+          # Passed via env, not interpolated into shell source: a committed
+          # filename must be data here, never code, in a secrets-bearing job.
+          SLUGS: ${{ steps.added.outputs.slugs }}
+        run: |
+          FAILED=0
+          while IFS= read -r SLUG; do
+            [ -z "$SLUG" ] && continue
+            echo "::group::drafting $SLUG"
+            node scripts/newsletter-draft.mjs "$SLUG" || FAILED=1
+            echo "::endgroup::"
+          done <<< "$SLUGS"
+          exit $FAILED

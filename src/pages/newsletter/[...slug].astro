@@ -1,0 +1,93 @@
+---
+// Email-shaped rendering of each internal post, consumed by
+// scripts/newsletter-draft.mjs. Not a site page: no layout, no site CSS,
+// light-theme only, noindex.
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const site = (Astro.site?.href ?? "https://darshanpania.me").replace(/\/$/, "");
+const postUrl = `${site}/blog/${post.id}/`;
+
+const fmt = (d: Date) =>
+  `${d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+
+const preheader = post.data.description ?? "";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{post.data.title}</title>
+    <!-- is:global: MDX content from <Content /> carries no data-astro-cid
+         scope attribute, so scoped selectors like `.post-body p` would never
+         match the post body and juice would inline nothing into it. This page
+         renders alone as an email, so global scope is safe. -->
+    <style is:global>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f6f6f4;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        color: #1a1a1a;
+      }
+      .wrapper { max-width: 600px; margin: 0 auto; padding: 24px 16px; }
+      .card { background: #ffffff; border: 1px solid #e2e2de; border-radius: 8px; padding: 32px 28px; }
+      .brand { font-size: 13px; letter-spacing: 0.04em; color: #6b6b66; margin: 0 0 20px; }
+      .brand a { color: #6b6b66; text-decoration: none; }
+      h1.post-title { font-size: 26px; line-height: 1.25; margin: 0 0 6px; }
+      .meta { font-size: 13px; color: #6b6b66; margin: 0 0 24px; }
+      .meta a { color: #1a5fb4; }
+      .cover { width: 100%; height: auto; border-radius: 6px; margin: 0 0 20px; }
+      .post-body { font-size: 16px; line-height: 1.65; }
+      .post-body h2 { font-size: 21px; margin: 28px 0 10px; }
+      .post-body h3 { font-size: 18px; margin: 24px 0 8px; }
+      .post-body p { margin: 0 0 16px; }
+      .post-body a { color: #1a5fb4; }
+      .post-body img { max-width: 100%; height: auto; border-radius: 6px; }
+      .post-body blockquote { margin: 0 0 16px; padding: 2px 0 2px 16px; border-left: 3px solid #e2e2de; color: #4a4a46; }
+      .post-body pre { background: #22272e; color: #adbac7; padding: 14px 16px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; }
+      .post-body code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .footer { font-size: 12px; color: #6b6b66; text-align: center; padding: 20px 8px 4px; line-height: 1.6; }
+      .footer a { color: #6b6b66; }
+      .preheader { display: none; max-height: 0; overflow: hidden; mso-hide: all; }
+    </style>
+  </head>
+  <body>
+    <div class="preheader">{preheader}</div>
+    <div class="wrapper">
+      <div class="card">
+        <p class="brand"><a href={site}>musings — darshanpania.me</a></p>
+        <h1 class="post-title">{post.data.title}</h1>
+        <p class="meta">
+          {fmt(post.data.date)} · <a href={postUrl}>read on the site →</a>
+        </p>
+        {post.data.coverImage && (
+          <img class="cover" src={post.data.coverImage} alt="" />
+        )}
+        <div class="post-body" data-newsletter-body>
+          <Content />
+        </div>
+      </div>
+      <div class="footer">
+        <p>
+          you're getting this because you subscribed at
+          <a href={site}> darshanpania.me</a>.
+        </p>
+        <p><a href={"{{unsubscribe}}"}>unsubscribe</a> any time — no hard feelings.</p>
+      </div>
+    </div>
+  </body>
+</html>

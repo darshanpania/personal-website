@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test": "vitest run"
+    "test": "vitest run",
+    "newsletter:draft": "node scripts/newsletter-draft.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.0.0",
@@ -23,6 +24,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "cheerio": "^1.2.0",
+    "gray-matter": "^4.0.3",
+    "juice": "^12.1.2",
     "typescript": "^5.7.0",
     "vitest": "^4.1.5"
   }
