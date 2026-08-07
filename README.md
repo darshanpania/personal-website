@@ -112,9 +112,18 @@ The flow:
    prefetchers issue GETs, so confirming there would let a security appliance
    opt someone in on their behalf, which is the exact consent this feature
    exists to obtain.
-4. The button `POST`s to `/api/confirm`, which re-verifies the token (the route
-   is reachable directly), adds the contact to the **confirmed** list, removes
-   them from the pending list, and redirects to `/subscribed?state=…`.
+4. The button `POST`s JSON to `/api/confirm`, which re-verifies the token (the
+   route is reachable directly), adds the contact to the **confirmed** list,
+   removes them from the pending list, and returns `{ state }`. The page then
+   sends the reader to `/subscribed?state=…`.
+
+The body is JSON, not a form encoding, and that is load-bearing. Astro's
+`security.checkOrigin` is on by default and rejects cross-origin POSTs whose
+content type is form-like, comparing the `Origin` header against the origin it
+derives from the request. Behind the Cloudflare → Vercel proxy those never
+agree, so a plain `<form>` submission 403s for every real visitor. JSON is not
+a form-like type, so it passes — the same reason `/api/subscribe` has always
+worked.
 
 The pending-list removal is best-effort: once the confirmed membership lands
 the reader is subscribed, and failing them over a leftover row on a list
