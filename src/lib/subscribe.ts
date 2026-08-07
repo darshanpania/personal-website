@@ -192,16 +192,57 @@ export async function sendConfirmationEmail(
   return res.ok ? { ok: true } : { ok: false, error: "upstream" };
 }
 
+// AutoSend's own id for the everyone-list. Removing from it deletes the
+// contact outright rather than dropping a membership, so removeFromList
+// refuses to touch it even if someone misconfigures the pending list id.
+export const GLOBAL_CONTACT_LIST = "GLOBAL_CONTACT_LIST";
+
+// Drops one list membership without deleting the contact. `/contacts/email`
+// is an upsert and leaves existing memberships in place, so this is the only
+// way off the pending list.
+export async function removeFromList(
+  email: string,
+  listId: string,
+  deps: { apiKey: string; fetchImpl?: typeof fetch; timeoutMs?: number },
+): Promise<AutoSendResult> {
+  if (!listId || listId === GLOBAL_CONTACT_LIST) {
+    console.error("[subscribe] refusing to remove from the global contact list");
+    return { ok: false, error: "upstream" };
+  }
+  const res = await postAutoSend(
+    `/contact-lists/${encodeURIComponent(listId)}/contacts/remove`,
+    { emails: [email] },
+    deps,
+  );
+  return res.ok ? { ok: true } : { ok: false, error: "upstream" };
+}
+
+export type ConfirmDeps = AutoSendDeps & { pendingListId?: string };
+
 // Moves a verified contact onto the confirmed list. Campaigns target that
 // list, so this call is what actually earns someone a newsletter.
+//
+// The pending-list removal afterwards is deliberately best-effort: once the
+// confirmed membership lands the reader is subscribed, and failing them over
+// a leftover row on a list nothing sends to would be the wrong call. A retry
+// of the whole flow is safe — both operations are idempotent.
 export async function confirmSubscriber(
   email: string,
-  deps: AutoSendDeps,
+  deps: ConfirmDeps,
 ): Promise<AutoSendResult> {
   const res = await postAutoSend(
     "/contacts/email",
     { email, listIds: [deps.listId] },
     deps,
   );
-  return res.ok ? { ok: true } : { ok: false, error: "upstream" };
+  if (!res.ok) return { ok: false, error: "upstream" };
+
+  if (deps.pendingListId) {
+    const removed = await removeFromList(email, deps.pendingListId, deps);
+    if (!removed.ok) {
+      console.warn("[subscribe] confirmed, but pending-list removal failed");
+    }
+  }
+
+  return { ok: true };
 }

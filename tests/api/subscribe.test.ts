@@ -5,6 +5,7 @@ import {
   createRateLimiter,
   isValidEmail,
   parseBody,
+  removeFromList,
   sendConfirmationEmail,
 } from "../../src/lib/subscribe";
 
@@ -340,5 +341,132 @@ describe("confirmSubscriber", () => {
       fetchImpl: fetchMock,
     });
     expect(result).toEqual({ ok: false, error: "upstream" });
+  });
+});
+
+describe("removeFromList", () => {
+  it("posts to the list-scoped remove endpoint", async () => {
+    let captured: { url: string; init: RequestInit } | null = null;
+    const fetchMock = (async (url: string, init: RequestInit) => {
+      captured = { url, init };
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "pending-list", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(captured!.url).toBe(
+      "https://api.autosend.com/v1/contact-lists/pending-list/contacts/remove",
+    );
+    expect(JSON.parse(captured!.init.body as string)).toEqual({
+      emails: ["reader@example.com"],
+    });
+  });
+
+  it("refuses the global list — removing there deletes the contact outright", async () => {
+    let called = false;
+    const fetchMock = (async () => {
+      called = true;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "GLOBAL_CONTACT_LIST", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(called).toBe(false);
+  });
+
+  it("refuses an empty list id without calling out", async () => {
+    let called = false;
+    const fetchMock = (async () => {
+      called = true;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(called).toBe(false);
+  });
+});
+
+describe("confirmSubscriber pending-list cleanup", () => {
+  it("promotes, then removes from the pending list", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(calls).toEqual([
+      "https://api.autosend.com/v1/contacts/email",
+      "https://api.autosend.com/v1/contact-lists/pending-list/contacts/remove",
+    ]);
+  });
+
+  it("still reports success when only the cleanup fails", async () => {
+    // The reader is subscribed the moment the confirmed membership lands.
+    // A leftover row on a list nothing sends to must not fail them.
+    const fetchMock = (async (url: string) =>
+      url.includes("/contacts/remove")
+        ? new Response("nope", { status: 500 })
+        : new Response("{}", { status: 200 })) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("does not attempt cleanup when the promotion itself failed", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("boom", { status: 500 });
+    }) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(calls).toEqual(["https://api.autosend.com/v1/contacts/email"]);
+  });
+
+  it("skips cleanup entirely when no pending list is configured", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      fetchImpl: fetchMock,
+    });
+    expect(calls).toEqual(["https://api.autosend.com/v1/contacts/email"]);
   });
 });

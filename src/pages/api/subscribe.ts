@@ -63,7 +63,9 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   const siteUrl = import.meta.env.SITE_URL ?? "https://darshanpania.me";
   const token = signConfirmToken(parsed.body.email, confirmSecret);
-  const confirmUrl = `${siteUrl}/api/confirm?token=${encodeURIComponent(token)}`;
+  // Points at the page, not the API route: the page verifies and shows a
+  // button, and only that button's POST subscribes anyone.
+  const confirmUrl = `${siteUrl}/confirm?token=${encodeURIComponent(token)}`;
 
   const mailed = await sendConfirmationEmail(parsed.body.email, confirmUrl, {
     apiKey,

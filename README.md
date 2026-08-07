@@ -107,8 +107,20 @@ The flow:
    server-side; the signature is what makes the link unforgeable, so a
    stranger can't confirm someone else's address by guessing an id. Valid for
    48 hours.
-3. `GET /api/confirm?token=…` verifies the signature and expiry, then adds the
-   contact to the **confirmed** list and redirects to `/subscribed?state=…`.
+3. `GET /confirm?token=…` verifies the signature and expiry and renders a
+   button. It does **not** subscribe anyone — mail scanners and link
+   prefetchers issue GETs, so confirming there would let a security appliance
+   opt someone in on their behalf, which is the exact consent this feature
+   exists to obtain.
+4. The button `POST`s to `/api/confirm`, which re-verifies the token (the route
+   is reachable directly), adds the contact to the **confirmed** list, removes
+   them from the pending list, and redirects to `/subscribed?state=…`.
+
+The pending-list removal is best-effort: once the confirmed membership lands
+the reader is subscribed, and failing them over a leftover row on a list
+nothing sends to would be the wrong call. `removeFromList` refuses to act on
+`GLOBAL_CONTACT_LIST`, where a removal deletes the contact outright instead of
+dropping one membership.
 
 Because `scripts/newsletter-draft.mjs` targets `AUTOSEND_LIST_ID`, an
 unconfirmed address is unreachable by construction — there's no rule to
