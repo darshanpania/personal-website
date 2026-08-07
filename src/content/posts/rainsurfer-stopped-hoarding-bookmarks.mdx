@@ -1,0 +1,35 @@
+---
+title: "RainSurfer: How I Stopped Hoarding Bookmarks and Started Actually Reading"
+date: 2026-08-07
+category: tech
+description: "I had 150+ saved articles and read almost none of them. So I built a tool that picks one at random and puts it in front of me."
+draft: false
+---
+
+I cannot build a large language model. I know this because I can no longer do matrix multiplication. Not because I forgot what it is (I know what it is) but the fluency is gone. The irony isn't lost on me: I work in tech, AI is the biggest thing happening in tech, and the actual foundation of it is math I left behind somewhere in college.
+
+So I decided to find my on-ramp.
+
+MCPs were trending. Everyone was talking about Model Context Protocol like it was some mystical new paradigm. I dug in, and here's what clicked for me: **MCPs, at their core, are REST API wrappers**. They do more than that, sure. But once I understood that anyone with a good public API can become AI-native by building their own MCP, the intimidation disappeared.
+
+I built an MCP for [Raindrop.io](https://raindrop.io). (Raindrop then shipped their own. I knew they would. No regrets.) But building mine taught me things I couldn't have learned from a tutorial: why stdio was the original transport protocol, why it moved to streamable HTTPS, how OAuth and API tokens fit into the picture, and what tool calls and resources actually mean in practice. I used all of it to help CleverTap build the initial version of their MCP. A throwaway side project became real leverage.
+
+But it didn't solve my actual problem.
+
+I had 150+ bookmarks across 4-5 categories in Raindrop. Arsenal. AI. Engineering. Whatever else caught my eye. And I read almost none of it. Not because I didn't want to, but because every time I opened Raindrop, I'd freeze. Do I start with AI articles? Arsenal? What about that engineering post I saved three months ago?
+
+Decision paralysis. Classic. The bookmark graveyard is real and I was its most loyal contributor.
+
+So I built RainSurfer.
+
+The idea is almost offensively simple: define your Raindrop collections, and RainSurfer picks one saved article at random and puts it in front of you. You can open it and read now, come back and mark it read, or delete it from the RainSurfer UI if you're being honest with yourself that you were never going to read it anyway.
+
+That's it. No algorithm. No ranking. No "recommended for you." Just: here's a thing you saved. Read it.
+
+I now read 1-2 saved articles a day. RainSurfer has replaced my doomscrolling. I added PWA support so it works seamlessly on my phone, the same spot I used to open Instagram or X out of habit.
+
+The decision of what to read is gone. That was the whole problem.
+
+If you're not on [Raindrop.io](https://raindrop.io) yet, it's genuinely worth trying. It's the best bookmarking tool I've used, and I say that without any incentive to do so. The UI is clean, the categorization is flexible, and it just works.
+
+And if you're already drowning in saved links, give [RainSurfer](https://rainsurfer.app) a shot. It won't judge you for the 47 articles you saved in 2023. It'll just hand you one and ask: *this one?*
