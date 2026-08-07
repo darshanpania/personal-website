@@ -1,5 +1,11 @@
 import type { APIRoute } from "astro";
-import { callAutoSend, createRateLimiter, parseBody } from "@/lib/subscribe";
+import {
+  callAutoSend,
+  createRateLimiter,
+  parseBody,
+  sendConfirmationEmail,
+} from "@/lib/subscribe";
+import { signConfirmToken } from "@/lib/confirm-token";
 
 export const prerender = false;
 
@@ -34,19 +40,45 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   }
 
   const apiKey = import.meta.env.AUTOSEND_API_KEY;
-  const listId = import.meta.env.AUTOSEND_LIST_ID;
-  if (!apiKey || !listId) {
-    console.error("[subscribe] AUTOSEND_API_KEY or AUTOSEND_LIST_ID not set");
+  const pendingListId = import.meta.env.AUTOSEND_PENDING_LIST_ID;
+  const senderEmail = import.meta.env.AUTOSEND_SENDER_EMAIL;
+  const confirmSecret = import.meta.env.NEWSLETTER_CONFIRM_SECRET;
+  if (!apiKey || !pendingListId || !senderEmail || !confirmSecret) {
+    console.error("[subscribe] missing AutoSend or confirmation env config");
     return json(502, { ok: false, error: "upstream" });
   }
 
+  // Land on the pending list only. Nothing reaches the confirmed list — and
+  // therefore nothing receives a campaign — until the emailed link is clicked.
   const result = await callAutoSend(parsed.body.email, parsed.body.firstName, {
     apiKey,
-    listId,
+    listId: pendingListId,
   });
-  if (result.ok) return json(200, { ok: true });
-  if (result.error === "invalid_email") {
-    return json(400, { ok: false, error: "invalid_email" });
+  if (!result.ok) {
+    if (result.error === "invalid_email") {
+      return json(400, { ok: false, error: "invalid_email" });
+    }
+    return json(502, { ok: false, error: "upstream" });
   }
-  return json(502, { ok: false, error: "upstream" });
+
+  const siteUrl = import.meta.env.SITE_URL ?? "https://darshanpania.me";
+  const token = signConfirmToken(parsed.body.email, confirmSecret);
+  // Points at the page, not the API route: the page verifies and shows a
+  // button, and only that button's POST subscribes anyone.
+  const confirmUrl = `${siteUrl}/confirm?token=${encodeURIComponent(token)}`;
+
+  const mailed = await sendConfirmationEmail(parsed.body.email, confirmUrl, {
+    apiKey,
+    fromEmail: senderEmail,
+    replyTo: "darshanpania@gmail.com",
+    unsubscribeGroupId: import.meta.env.AUTOSEND_UNSUB_GROUP_ID,
+  });
+  if (!mailed.ok) {
+    // The contact is parked on the pending list but has no way to confirm.
+    // Report failure so the reader retries rather than waiting on an email
+    // that never arrives; the retry is idempotent on AutoSend's side.
+    return json(502, { ok: false, error: "upstream" });
+  }
+
+  return json(200, { ok: true });
 };

@@ -1,0 +1,58 @@
+---
+import Base from "@/layouts/Base.astro";
+import { verifyConfirmToken } from "@/lib/confirm-token";
+
+// The landing page for the link in the confirmation email. It only *checks*
+// the token — nothing is subscribed until the reader presses the button,
+// which POSTs to /api/confirm. Mail scanners and link prefetchers issue GETs,
+// so confirming on GET would let a security appliance opt someone in on their
+// behalf, which is precisely the consent this feature exists to obtain.
+export const prerender = false;
+
+const confirmSecret = import.meta.env.NEWSLETTER_CONFIRM_SECRET;
+if (!confirmSecret) {
+  console.error("[confirm] NEWSLETTER_CONFIRM_SECRET not set");
+  return Astro.redirect("/subscribed?state=error", 302);
+}
+
+const token = Astro.url.searchParams.get("token");
+const verified = verifyConfirmToken(token, confirmSecret);
+if (!verified.ok) {
+  return Astro.redirect(
+    `/subscribed?state=${verified.error === "expired" ? "expired" : "invalid"}`,
+    302,
+  );
+}
+---
+
+<Base
+  title="confirm your subscription — Darshan Pania"
+  description="Confirm your newsletter subscription."
+>
+  <section class="space-y-2">
+    <h1
+      class="font-mono text-2xl md:text-[2.25rem] font-medium text-(--text-primary) tracking-tight cursor-blink"
+    >
+      one last tap
+    </h1>
+    <p class="text-(--mono-accent) text-base font-mono">confirm your subscription</p>
+  </section>
+
+  <hr class="my-8 border-0 border-t border-(--border) w-10" />
+
+  <p class="text-(--text-primary) text-base leading-7">
+    Press the button and you're on the list — one email when a new post goes up,
+    nothing in between. If you didn't sign up, close this tab and nothing
+    happens.
+  </p>
+
+  <form method="POST" action="/api/confirm" class="mt-8">
+    <input type="hidden" name="token" value={token} />
+    <button
+      type="submit"
+      class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 transition-[opacity,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none"
+    >
+      confirm subscription
+    </button>
+  </form>
+</Base>

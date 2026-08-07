@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   callAutoSend,
+  confirmSubscriber,
   createRateLimiter,
   isValidEmail,
   parseBody,
+  removeFromList,
+  sendConfirmationEmail,
 } from "../../src/lib/subscribe";
 
 describe("isValidEmail", () => {
@@ -194,6 +197,23 @@ describe("callAutoSend", () => {
     expect(result).toEqual({ ok: false, error: "invalid_email" });
   });
 
+  it("maps auth/rate-limit 4xx to upstream, not invalid_email", async () => {
+    // A misconfigured API key must never surface as "check your address".
+    for (const status of [401, 403, 404, 429]) {
+      const fetchMock = (async () =>
+        new Response("nope", { status })) as typeof fetch;
+      const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
+      expect(result).toEqual({ ok: false, error: "upstream" });
+    }
+  });
+
+  it("maps 422 to invalid_email alongside 400", async () => {
+    const fetchMock = (async () =>
+      new Response("unprocessable", { status: 422 })) as typeof fetch;
+    const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
+    expect(result).toEqual({ ok: false, error: "invalid_email" });
+  });
+
   it("maps a 5xx upstream response to upstream", async () => {
     const fetchMock = (async () =>
       new Response("server boom", { status: 502 })) as typeof fetch;
@@ -207,5 +227,246 @@ describe("callAutoSend", () => {
     }) as typeof fetch;
     const result = await callAutoSend("reader@example.com", "", deps(fetchMock));
     expect(result).toEqual({ ok: false, error: "upstream" });
+  });
+});
+
+describe("sendConfirmationEmail", () => {
+  const deps = (fetchImpl: typeof fetch) => ({
+    apiKey: "test-key",
+    fromEmail: "musings@darshanpania.me",
+    replyTo: "darshanpania@gmail.com",
+    unsubscribeGroupId: "IGFO6",
+    fetchImpl,
+    timeoutMs: 1_000,
+  });
+
+  it("posts to /mails/send with the confirm link embedded", async () => {
+    let captured: { url: string; init: RequestInit } | null = null;
+    const fetchMock = (async (url: string, init: RequestInit) => {
+      captured = { url, init };
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await sendConfirmationEmail(
+      "reader@example.com",
+      "https://darshanpania.me/api/confirm?token=abc.def",
+      deps(fetchMock),
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(captured!.url).toBe("https://api.autosend.com/v1/mails/send");
+    const body = JSON.parse(captured!.init.body as string);
+    expect(body.to).toEqual({ email: "reader@example.com" });
+    expect(body.from.email).toBe("musings@darshanpania.me");
+    expect(body.replyTo).toEqual({ email: "darshanpania@gmail.com" });
+    expect(body.unsubscribeGroupId).toBe("IGFO6");
+    expect(body.html).toContain(
+      'href="https://darshanpania.me/api/confirm?token=abc.def"',
+    );
+  });
+
+  it("omits replyTo and unsubscribeGroupId when not configured", async () => {
+    let captured: RequestInit | null = null;
+    const fetchMock = (async (_url: string, init: RequestInit) => {
+      captured = init;
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    await sendConfirmationEmail("reader@example.com", "https://x.test/c", {
+      apiKey: "k",
+      fromEmail: "a@b.test",
+      fetchImpl: fetchMock,
+    });
+    const body = JSON.parse(captured!.body as string);
+    expect(body).not.toHaveProperty("replyTo");
+    expect(body).not.toHaveProperty("unsubscribeGroupId");
+  });
+
+  it("maps any non-2xx to upstream — a 4xx here is not the reader's fault", async () => {
+    for (const status of [400, 422, 500, 503]) {
+      const fetchMock = (async () =>
+        new Response("nope", { status })) as typeof fetch;
+      const result = await sendConfirmationEmail("r@e.com", "https://x.test/c", {
+        apiKey: "k",
+        fromEmail: "a@b.test",
+        fetchImpl: fetchMock,
+      });
+      expect(result).toEqual({ ok: false, error: "upstream" });
+    }
+  });
+});
+
+describe("confirmSubscriber", () => {
+  it("puts the contact on the confirmed list", async () => {
+    let captured: { url: string; init: RequestInit } | null = null;
+    const fetchMock = (async (url: string, init: RequestInit) => {
+      captured = { url, init };
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "test-key",
+      listId: "confirmed-list",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(captured!.url).toBe("https://api.autosend.com/v1/contacts/email");
+    expect(JSON.parse(captured!.init.body as string)).toEqual({
+      email: "reader@example.com",
+      listIds: ["confirmed-list"],
+    });
+  });
+
+  it("maps a 4xx to upstream rather than invalid_email", async () => {
+    // The address already passed validation at signup, so a rejection here is
+    // an infrastructure problem, not something the reader can fix.
+    const fetchMock = (async () =>
+      new Response("bad", { status: 400 })) as typeof fetch;
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "l",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: false, error: "upstream" });
+  });
+
+  it("maps a network failure to upstream", async () => {
+    const fetchMock = (async () => {
+      throw new Error("connection refused");
+    }) as typeof fetch;
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "l",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: false, error: "upstream" });
+  });
+});
+
+describe("removeFromList", () => {
+  it("posts to the list-scoped remove endpoint", async () => {
+    let captured: { url: string; init: RequestInit } | null = null;
+    const fetchMock = (async (url: string, init: RequestInit) => {
+      captured = { url, init };
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "pending-list", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(captured!.url).toBe(
+      "https://api.autosend.com/v1/contact-lists/pending-list/contacts/remove",
+    );
+    expect(JSON.parse(captured!.init.body as string)).toEqual({
+      emails: ["reader@example.com"],
+    });
+  });
+
+  it("refuses the global list — removing there deletes the contact outright", async () => {
+    let called = false;
+    const fetchMock = (async () => {
+      called = true;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "GLOBAL_CONTACT_LIST", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(called).toBe(false);
+  });
+
+  it("refuses an empty list id without calling out", async () => {
+    let called = false;
+    const fetchMock = (async () => {
+      called = true;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    const result = await removeFromList("reader@example.com", "", {
+      apiKey: "k",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(called).toBe(false);
+  });
+});
+
+describe("confirmSubscriber pending-list cleanup", () => {
+  it("promotes, then removes from the pending list", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: true });
+    expect(calls).toEqual([
+      "https://api.autosend.com/v1/contacts/email",
+      "https://api.autosend.com/v1/contact-lists/pending-list/contacts/remove",
+    ]);
+  });
+
+  it("still reports success when only the cleanup fails", async () => {
+    // The reader is subscribed the moment the confirmed membership lands.
+    // A leftover row on a list nothing sends to must not fail them.
+    const fetchMock = (async (url: string) =>
+      url.includes("/contacts/remove")
+        ? new Response("nope", { status: 500 })
+        : new Response("{}", { status: 200 })) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+    expect(result).toEqual({ ok: true });
+  });
+
+  it("does not attempt cleanup when the promotion itself failed", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("boom", { status: 500 });
+    }) as unknown as typeof fetch;
+
+    const result = await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      pendingListId: "pending-list",
+      fetchImpl: fetchMock,
+    });
+
+    expect(result).toEqual({ ok: false, error: "upstream" });
+    expect(calls).toEqual(["https://api.autosend.com/v1/contacts/email"]);
+  });
+
+  it("skips cleanup entirely when no pending list is configured", async () => {
+    const calls: string[] = [];
+    const fetchMock = (async (url: string) => {
+      calls.push(url);
+      return new Response("{}", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    await confirmSubscriber("reader@example.com", {
+      apiKey: "k",
+      listId: "confirmed-list",
+      fetchImpl: fetchMock,
+    });
+    expect(calls).toEqual(["https://api.autosend.com/v1/contacts/email"]);
   });
 });

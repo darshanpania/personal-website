@@ -88,6 +88,50 @@ The filename becomes the URL slug — `my-post.mdx` renders at `/blog/my-post`. 
 
 `npm run build` validates every entry against the Zod schemas in `content.config.ts`, so a malformed date or unknown category fails the build rather than shipping silently.
 
+## Newsletter signup (double opt-in)
+
+Nobody receives a campaign until they click a link in their inbox. Two
+AutoSend lists enforce it:
+
+| List | Env var | Role |
+|---|---|---|
+| Website Blog — Pending Confirmation | `AUTOSEND_PENDING_LIST_ID` | Where every signup lands. Never targeted by a campaign. |
+| Website Blog | `AUTOSEND_LIST_ID` | Confirmed subscribers. The only list campaigns send to. |
+
+The flow:
+
+1. `POST /api/subscribe` validates the address, adds it to the **pending**
+   list, and emails a confirmation link.
+2. The link carries a token — base64url JSON (`email` + expiry) signed with
+   HMAC-SHA256 under `NEWSLETTER_CONFIRM_SECRET`. Nothing is stored
+   server-side; the signature is what makes the link unforgeable, so a
+   stranger can't confirm someone else's address by guessing an id. Valid for
+   48 hours.
+3. `GET /confirm?token=…` verifies the signature and expiry and renders a
+   button. It does **not** subscribe anyone — mail scanners and link
+   prefetchers issue GETs, so confirming there would let a security appliance
+   opt someone in on their behalf, which is the exact consent this feature
+   exists to obtain.
+4. The button `POST`s to `/api/confirm`, which re-verifies the token (the route
+   is reachable directly), adds the contact to the **confirmed** list, removes
+   them from the pending list, and redirects to `/subscribed?state=…`.
+
+The pending-list removal is best-effort: once the confirmed membership lands
+the reader is subscribed, and failing them over a leftover row on a list
+nothing sends to would be the wrong call. `removeFromList` refuses to act on
+`GLOBAL_CONTACT_LIST`, where a removal deletes the contact outright instead of
+dropping one membership.
+
+Because `scripts/newsletter-draft.mjs` targets `AUTOSEND_LIST_ID`, an
+unconfirmed address is unreachable by construction — there's no rule to
+remember and no way to accidentally mail the pending list.
+
+Rotating `NEWSLETTER_CONFIRM_SECRET` invalidates every unclicked link still in
+flight. Those readers just sign up again.
+
+`/subscribed` renders four states — `confirmed`, `expired`, `invalid`,
+`error` — and anything unrecognised falls back to `invalid`.
+
 ## Design tokens
 
 `src/styles/global.css` declares the canonical CSS variables for both modes:
