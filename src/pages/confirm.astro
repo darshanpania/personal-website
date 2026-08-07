@@ -77,6 +77,8 @@ if (!verified.ok) {
   // the request, and behind the Cloudflare -> Vercel proxy those never match,
   // so a plain <form> here 403s for every real visitor. JSON isn't a form-like
   // content type, so it passes — same path /api/subscribe already uses.
+  // The states /subscribed knows how to render.
+  const STATES = ["confirmed", "expired", "invalid", "error"];
   const btn = document.getElementById("confirm-btn") as HTMLButtonElement | null;
   const status = document.getElementById("confirm-status");
   const token = btn?.dataset.token ?? "";
@@ -91,8 +93,15 @@ if (!verified.ok) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
       });
-      const data = (await res.json().catch(() => ({}))) as { state?: string };
-      window.location.href = `/subscribed?state=${data.state ?? "error"}`;
+      // Deliberately not swallowing a parse failure. A proxy hiccup that
+      // returns an HTML error page instead of JSON is recoverable — the token
+      // is good for 48 hours — so it belongs in the retry path below rather
+      // than sending the reader to a dead-end error screen. Same for a state
+      // we don't recognise: navigate only on a value the next page can render.
+      const data = (await res.json()) as { state?: unknown };
+      const state = String(data?.state);
+      if (!STATES.includes(state)) throw new Error("unrecognised state");
+      window.location.href = `/subscribed?state=${state}`;
     } catch {
       btn.disabled = false;
       if (status) {
