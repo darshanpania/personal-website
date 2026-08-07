@@ -46,13 +46,58 @@ if (!verified.ok) {
     happens.
   </p>
 
-  <form method="POST" action="/api/confirm" class="mt-8">
-    <input type="hidden" name="token" value={token} />
+  <div class="mt-8">
     <button
-      type="submit"
-      class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 transition-[opacity,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none"
+      id="confirm-btn"
+      type="button"
+      data-token={token}
+      class="rounded-md bg-(--mono-accent) px-4 py-2 font-mono text-sm font-medium text-(--bg) hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-[opacity,transform] duration-150 active:scale-[0.98] motion-reduce:transform-none"
     >
       confirm subscription
     </button>
-  </form>
+    <p
+      id="confirm-status"
+      role="status"
+      aria-live="polite"
+      class="mt-3 min-h-[1.25rem] font-mono text-xs text-(--text-secondary)"
+    >
+    </p>
+    <noscript>
+      <p class="mt-3 font-mono text-xs text-(--text-secondary)">
+        confirming needs javascript enabled. turn it on and reload, or reply to
+        the email and I'll add you by hand.
+      </p>
+    </noscript>
+  </div>
 </Base>
+
+<script>
+  // Submitted as JSON rather than as a form. Astro's origin check refuses
+  // form-encoded POSTs whose Origin doesn't match the origin it derives from
+  // the request, and behind the Cloudflare -> Vercel proxy those never match,
+  // so a plain <form> here 403s for every real visitor. JSON isn't a form-like
+  // content type, so it passes — same path /api/subscribe already uses.
+  const btn = document.getElementById("confirm-btn") as HTMLButtonElement | null;
+  const status = document.getElementById("confirm-status");
+  const token = btn?.dataset.token ?? "";
+
+  btn?.addEventListener("click", async () => {
+    btn.disabled = true;
+    if (status) status.textContent = "confirming…";
+
+    try {
+      const res = await fetch("/api/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { state?: string };
+      window.location.href = `/subscribed?state=${data.state ?? "error"}`;
+    } catch {
+      btn.disabled = false;
+      if (status) {
+        status.textContent = "that didn't go through — try again in a moment.";
+      }
+    }
+  });
+</script>
