@@ -88,6 +88,38 @@ The filename becomes the URL slug — `my-post.mdx` renders at `/blog/my-post`. 
 
 `npm run build` validates every entry against the Zod schemas in `content.config.ts`, so a malformed date or unknown category fails the build rather than shipping silently.
 
+## Newsletter signup (double opt-in)
+
+Nobody receives a campaign until they click a link in their inbox. Two
+AutoSend lists enforce it:
+
+| List | Env var | Role |
+|---|---|---|
+| Website Blog — Pending Confirmation | `AUTOSEND_PENDING_LIST_ID` | Where every signup lands. Never targeted by a campaign. |
+| Website Blog | `AUTOSEND_LIST_ID` | Confirmed subscribers. The only list campaigns send to. |
+
+The flow:
+
+1. `POST /api/subscribe` validates the address, adds it to the **pending**
+   list, and emails a confirmation link.
+2. The link carries a token — base64url JSON (`email` + expiry) signed with
+   HMAC-SHA256 under `NEWSLETTER_CONFIRM_SECRET`. Nothing is stored
+   server-side; the signature is what makes the link unforgeable, so a
+   stranger can't confirm someone else's address by guessing an id. Valid for
+   48 hours.
+3. `GET /api/confirm?token=…` verifies the signature and expiry, then adds the
+   contact to the **confirmed** list and redirects to `/subscribed?state=…`.
+
+Because `scripts/newsletter-draft.mjs` targets `AUTOSEND_LIST_ID`, an
+unconfirmed address is unreachable by construction — there's no rule to
+remember and no way to accidentally mail the pending list.
+
+Rotating `NEWSLETTER_CONFIRM_SECRET` invalidates every unclicked link still in
+flight. Those readers just sign up again.
+
+`/subscribed` renders four states — `confirmed`, `expired`, `invalid`,
+`error` — and anything unrecognised falls back to `invalid`.
+
 ## Design tokens
 
 `src/styles/global.css` declares the canonical CSS variables for both modes:
