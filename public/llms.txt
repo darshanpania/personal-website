@@ -1,7 +1,7 @@
 # Darshan Pania
 
-> Director of Engineering at CleverTap. I build mobile SDKs and engineering teams.
-> 13+ years on mobile platforms, customer-engagement infrastructure, and AI-native developer tooling.
+> Senior Director of Engineering at CleverTap. I build mobile SDKs and engineering teams.
+> 14+ years on mobile platforms, customer-engagement infrastructure, and AI-native developer tooling.
 > I write about engineering leadership, AI workflows, mobile development, and sci-fi.
 
 ## Pages
@@ -23,9 +23,10 @@
 ## Projects
 
 - [FPLGuru](https://fplguru.com): AI-powered Fantasy Premier League assistant — React frontend, Python/RAG backend, Pinecone vector store, GPT-4o
+- [How Shit Works](https://howshitworks.darshanpania.me): Everyday electrical and mechanical appliances, shown from the inside in 3D — three.js
+- [RainSurfer](https://rainsurfer.darshanpania.me): Web app to rediscover saved Raindrop.io articles — OAuth 2.0, random article surfacing
 - [Raindrop.io MCP Server](https://github.com/darshanpania/raindrop-io-mcp-server): MCP server exposing Raindrop.io bookmark management to LLM agents over HTTP/SSE
 - [Notificity](https://github.com/darshanpania/Notificity): Android app for capturing and categorising push notifications — Kotlin, Jetpack Compose, MVVM, open-source
-- [RainSurfer](https://rainsurfer.darshanpania.me): Web app to rediscover saved Raindrop.io articles — OAuth 2.0, random article surfacing
 
 ## Optional
 
