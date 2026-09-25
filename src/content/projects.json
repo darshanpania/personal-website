@@ -8,20 +8,12 @@
     "order": 1
   },
   {
-    "id": "raindrop-mcp",
-    "name": "Raindrop.io MCP Server",
+    "id": "howshitworks",
+    "name": "How Shit Works",
     "platform": "web",
-    "description": "An MCP server that exposes Raindrop.io bookmark management to LLM agents over HTTP/SSE. Built and presented at internal community events; now part of my personal and team workflows for AI-assisted knowledge management. Deployed to Railway with GitHub Actions CI/CD.",
-    "link": "https://github.com/darshanpania/raindrop-io-mcp-server",
+    "description": "An interactive guide to everyday electrical and mechanical appliances, shown from the inside in 3D. Each one is a short story: where the power comes in, what moves, and why it does the job. Five live today (ceiling fan, toaster, pressure cooker, door knob, door lock), with eleven more on the way. Built with three.js.",
+    "link": "https://howshitworks.darshanpania.me",
     "order": 2
-  },
-  {
-    "id": "notificity",
-    "name": "Notificity",
-    "platform": "android",
-    "description": "An Android app that captures and categorises every incoming push notification, with search by app or keyword. Built originally as a debugging tool during SDK development at CleverTap, then open-sourced as an architecture reference for the Android community. MVVM, Kotlin Coroutines and Flows, Jetpack Compose, Hilt, Robolectric, JUnit, Mockk. Six external contributors and counting.",
-    "link": "https://github.com/darshanpania/Notificity",
-    "order": 3
   },
   {
     "id": "rainsurfer",
@@ -29,6 +21,22 @@
     "platform": "web",
     "description": "A web app that helps you rediscover articles you saved on Raindrop.io. Pick a collection, see a random article preview, then read it, mark it done, or skip to the next. OAuth 2.0 against the Raindrop API.",
     "link": "https://rainsurfer.darshanpania.me",
+    "order": 3
+  },
+  {
+    "id": "raindrop-mcp",
+    "name": "Raindrop.io MCP Server",
+    "platform": "web",
+    "description": "An MCP server that exposes Raindrop.io bookmark management to LLM agents over HTTP/SSE. Built and presented at internal community events; now part of my personal and team workflows for AI-assisted knowledge management. Deployed to Railway with GitHub Actions CI/CD.",
+    "link": "https://github.com/darshanpania/raindrop-io-mcp-server",
     "order": 4
+  },
+  {
+    "id": "notificity",
+    "name": "Notificity",
+    "platform": "android",
+    "description": "An Android app that captures and categorises every incoming push notification, with search by app or keyword. Built originally as a debugging tool during SDK development at CleverTap, then open-sourced as an architecture reference for the Android community. MVVM, Kotlin Coroutines and Flows, Jetpack Compose, Hilt, Robolectric, JUnit, Mockk. Six external contributors and counting.",
+    "link": "https://github.com/darshanpania/Notificity",
+    "order": 5
   }
 ]
