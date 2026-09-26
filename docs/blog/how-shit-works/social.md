@@ -17,7 +17,7 @@ It hissed. It whistled. It looked like it could go off at any moment.
 
 Then a school science assignment made me write about how it works. I made a huge chart, and the fear went away.
 
-Last week, Julie Zhuo's post "AI for No Good Reason" brought that chart back to me. So I built it again, but bigger: How Shit Works, a 3D site that shows everyday appliances from the inside.
+Julie Zhuo's post "AI for No Good Reason" brought that chart back to me. So I built it again, but bigger: How Shit Works, a 3D site that shows everyday appliances from the inside.
 
 The full story, including why I had given up on Opus 5 and what changed with Opus 5.5, is on my blog 👇
 
