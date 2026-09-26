@@ -2,7 +2,7 @@
 
 Publish this only after the blog post is live and Google has indexed it (see the checklist in social.md).
 
-**Title:** I Was Scared of Pressure Cookers. So I Built a Site That Shows How Things Work.
+**Title:** I Built the Chart That Cured My Fear of the Pressure Cooker
 
 **Cover image:** public/images/posts/how-shit-works/og-cover.webp
 
@@ -10,57 +10,41 @@ Publish this only after the blog post is live and Google has indexed it (see the
 
 _Originally published at [darshanpania.me/blog/how-shit-works](https://darshanpania.me/blog/how-shit-works/)_
 
-As a kid, the scariest thing in our kitchen was the pressure cooker. It hissed, it whistled, and it looked like it could go off at any moment.
+As a kid, the one thing in our kitchen I stayed away from was the pressure cooker.
 
-I grew up in a middle class family, so I wasn't the kid who took the radio apart. You didn't open things up. You used them, carefully.
+I grew up in a middle class family, and in a middle class home you don't open things up to see how they work. You use them, and you don't break them. So the pressure cooker stayed what it was to me: a sealed pot on the stove that whistled, and that I stayed away from.
 
-When I was 10, I got a science assignment to write about how a pressure cooker works. I read about it and made a huge chart explaining it. By the time the chart was done, the fear was gone. Once I understood it, I wasn't so scared of it anymore.
+That changed when I was 10. I got a science assignment to write about how a pressure cooker works. I read about it and made a huge chart explaining every part of it. By the time the chart was done, the fear was gone. Nothing about the cooker had changed. I just understood it now.
 
-I hadn't thought about that chart in years.
+I forgot about that chart for a long time. Then Julie Zhuo ([@joulee](https://x.com/joulee)) brought it back.
 
-## AI for no good reason
+Her post, [AI for No Good Reason](https://lg.substack.com/p/a-bird-wall-a-talking-rotary-phone), asks how we can use AI tools to get more out of leisure. She sorts the answers into four buckets: hobbies, the pot at the end of the what-if rainbow, future doses of delight, and one-of-a-kind gifts. Somewhere in that list, I was 10 again, standing next to my chart. I've always wanted to know how mechanical and electrical appliances work. What if I made that chart again, for every appliance in the house, for every kid who has the same curiosity I had?
 
-What brought it back was @joulee and her post "AI for No Good Reason". Her question: how can we use AI tools to get more out of leisure? She splits it into four buckets:
+That's [How Shit Works](https://howshitworks.darshanpania.me).
 
-- Hobbies
-- The pot at the end of the what-if rainbow
-- Future doses of delight
-- One-of-a-kind gifts
+[IMAGE: landing.webp — The How Shit Works landing page with an exploded 3D cube and the appliance cards]
 
-That triggered the memory. I've always been curious about how mechanical and electrical appliances work. So I wanted to build that chart again, but bigger: take everyday appliances, show their inner workings, and demystify them for kids and young adults who have the same curiosity I had.
+It's a super basic three.js static website. Each appliance is a short story, one step at a time, with the part in focus shown from the inside. Right now it has a ceiling fan, a toaster, a door knob, a door lock, and, of course, the pressure cooker. Its story ends on the safety valve, the part that opens and lets the steam out before the pot can fail. That's the answer 10-year-old me was looking for.
 
-That's How Shit Works: howshitworks.darshanpania.me
+[IMAGE: pressure-cooker.webp — The pressure cooker page with the flame heating the water inside a sealed pot]
 
-[IMAGE: landing.webp]
+I built it with Opus 5.5, and that part needs some honesty.
 
-## The model I had given up on
+I had literally given up on Opus 5. I hated that model. It did nothing productive. It just vomited tons of garbage Claude-ish, English but by Claude, that made no sense, and I had to sit there and decipher it. It made me very angry.
 
-It's a super basic three.js static website, built with Opus 5.5.
+Opus 5.5 is everything Opus 5 promised to be, and even better. My prompt for How Shit Works was simple: research 3D models, and wow me. It did. It came back with 3D models, animations, and sounds. Opus 5 would never have built 3D models this well. Opus 5.5 has been a breath of fresh air.
 
-Honest backstory: I had literally given up on Opus 5. I hated the model. It did nothing productive, just vomited tons of garbage Claude-ish (English, but by Claude) that I had to decipher. It made me very angry.
+[IMAGE: toaster.webp — The toaster in x-ray view with the heating elements glowing red]
 
-Opus 5.5 is everything Opus 5 promised to be, and even better. I gave it a simple prompt: research 3D models, and wow me. And it did, with 3D models, animations, and even sounds. Opus 5 would never have built 3D models this well. It has been a breath of fresh air.
+Before launch, I showed it to a friend. He loved the design and the animations. He also looked past them. At that point, every appliance had its own code, and his feedback was to build a framework that every appliance could reuse. That became the studio redesign. Now the code is modular, and adding a new appliance is easy. That matters, because the coming soon list already has a lot more appliances and tools waiting on it.
 
-[IMAGE: toaster.webp]
+[IMAGE: door-lock.webp — The door lock page showing five pin tumblers lined up at the shear line]
 
-## What's inside
+I built this for kids and adults alike, so I have two asks.
 
-A ceiling fan, a toaster, a door knob, a door lock, and yes, the pressure cooker. Each one walks you through a short story, one step at a time, with the part in focus shown from the inside. A lot more appliances and tools are in the coming soon section.
+Share [How Shit Works](https://howshitworks.darshanpania.me) with your kids and young ones, and let their curiosity be satiated. Somewhere, a kid is scared of the pressure cooker in their kitchen.
 
-[IMAGE: door-lock.webp]
-
-## One piece of feedback
-
-I showed it to a friend before launch. He loved the design and the animations, and his feedback shaped what it is now.
-
-At first, every appliance had its own code. He told me to make a framework that could be reused. That became the studio redesign. Now the code is modular, and a new appliance can be added with ease.
-
-[IMAGE: pressure-cooker.webp]
-
-## Two asks
-
-1. Share How Shit Works with your kids and young ones, and let their curiosity be satiated. Maybe one of them is scared of the pressure cooker too.
-2. Build something for fun. Pick one of Julie's buckets and build something for no good reason. This one started as a chart I made when I was 10.
+And build something for fun. Pick one of Julie's buckets and make something for no good reason. Mine started as a chart I made when I was 10.
 
 ---
 

@@ -11,27 +11,25 @@
 
 ## LinkedIn teaser (links to the blog)
 
-When I was 10, I was scared of our pressure cooker.
+When I was 10, I was scared of the pressure cooker.
 
-It hissed. It whistled. It looked like it could go off at any moment.
+Then a school science assignment made me write about how it works. I made a huge chart. By the time it was done, the fear was gone. Nothing about the cooker had changed. I just understood it now.
 
-Then a school science assignment made me write about how it works. I made a huge chart, and the fear went away.
-
-Julie Zhuo's post "AI for No Good Reason" brought that chart back to me. So I built it again, but bigger: How Shit Works, a 3D site that shows everyday appliances from the inside.
+Julie Zhuo's post "AI for No Good Reason" brought that chart back to me. So I made it again, for every appliance in the house: How Shit Works, a 3D site that shows everyday appliances from the inside.
 
 The full story, including why I had given up on Opus 5 and what changed with Opus 5.5, is on my blog 👇
 
 https://darshanpania.me/blog/how-shit-works/
 
-(Attach: landing.webp or toaster.webp)
+(Attach: pressure-cooker.webp or toaster.webp)
 
 ## X teaser (quote or link the X Article)
 
 Option A:
 
-I was scared of pressure cookers until a school chart at 10 explained one.
+A chart I made at 10 cured my fear of the pressure cooker.
 
-So I built the chart again, in 3D, with Opus 5.5.
+So I made it again, in 3D, for every appliance in the house.
 
 The story of How Shit Works 👇
 
