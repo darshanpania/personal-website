@@ -4,9 +4,10 @@ import SocialIcon from "@/components/SocialIcon.astro";
 import NewsletterInline from "@/components/NewsletterInline.astro";
 import NewsletterModal from "@/components/NewsletterModal.astro";
 import { getCollection, render } from "astro:content";
+import { isListed } from "@/lib/drafts";
 
 export async function getStaticPaths() {
-  const posts = await getCollection("posts", ({ data }) => !data.draft);
+  const posts = await getCollection("posts", ({ data }) => isListed(data));
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },
@@ -17,7 +18,7 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 
 // Prev/next among local posts, newest first.
-const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+const allPosts = (await getCollection("posts", ({ data }) => isListed(data))).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
 const currentIndex = allPosts.findIndex((p) => p.id === post.id);
