@@ -2,23 +2,25 @@
 title: "Building FPLGuru #3: My Co-founders Are Robots"
 date: 2026-10-06
 category: tech
-description: "Agents wrote about four in five commits in FPLGuru. This is how two people and a lot of models work together: the rules, the gates, the bad months and the model that changed everything. Part three of a series on building FPLGuru."
+description: "AI agents wrote about four in five commits in FPLGuru, and I don't think I've seen any code since Fable 5. Here's how two people and a lot of models work together: the rules, the gates, the bad months, and the model that changed everything. Part 3 of a series."
 draft: true
 ---
 
-I have not read FPLGuru's code since June.
+*Part 3 of Building FPLGuru. [Part 1](/blog/building-fplguru-1-from-a-gpt-4-prompt) was the origin story, and [part 2](/blog/building-fplguru-2-teaching-a-machine-to-play-fpl) was the engine.*
 
-I do not mean that I skim it. I mean I do not open it. Before Fable 5, I used to skim what the model wrote, and sometimes I looked at the structure or the architecture. Since Fable 5, and now with Opus 5.5, I do not think I have seen any code.
+I don't think I've seen any of FPLGuru's code since Fable 5.
 
-In September, 3,858 commits landed in FPLGuru that were not merges. 156 of them carry my name, and 154 of those carry a `Co-Authored-By: Claude Fable 5.1` line, because an agent wrote them in a session I ran. The rest came from agents working for DK and me.
+I don't mean I skim it. I mean I don't open it. Before Fable 5, I used to skim what the model wrote, and every now and then I'd look at the code, the structure or the architecture. Since Fable 5, and now with Opus 5.5, I genuinely don't think I've looked.
 
-If you are an engineer, that first paragraph probably makes you nervous. It made me nervous too. This post is about why I am comfortable with it now: who writes the code, the rules they work under, the gates that check them, the months when it went badly, and what is left for the two humans.
+In September, 3,858 commits that weren't merges landed in FPLGuru. 156 of them carry my name, and 154 of those carry a `Co-Authored-By: Claude Fable 5.1` line, because an agent wrote them in a session I ran. The rest came from agents working for DK and me.
 
-## Who wrote this codebase
+If you're an engineer, that probably makes you twitch. It made me twitch too. This post is about why I'm comfortable with it now: who writes the code, the rules they work under, the gates that check them, the months when it went badly, and what's left for the two humans.
 
-I will lean on the git log in this post, because it is the one witness that cannot flatter anyone.
+## Who actually writes the code
 
-As I write this, the `develop` branch has 11,000 commits. 8,154 of them are not merges. Here is who wrote those:
+I'm going to lean on the git log a lot in this post, because it's the one witness that can't flatter anyone.
+
+As I write this, the `develop` branch has 11,000 commits. 8,154 of them aren't merges. Here's who wrote those:
 
 | Author | Commits |
 |---|---|
@@ -28,15 +30,15 @@ As I write this, the `develop` branch has 11,000 commits. 8,154 of them are not 
 | Darshan (three git names) | 590 |
 | Divyekant | 25 |
 
-Claude and Codex Automation together wrote 6,441 of 8,154. That is about 79%.
+Claude and Codex Automation together wrote 6,441 of 8,154. That's about 79%.
 
 Two warnings before you quote that number.
 
-First, commits are not lines of code, and an agent commit was still asked for, specified and checked by a person. "Agents typed four in five commits" is the exact claim.
+First, commits aren't lines of code, and every agent commit was still asked for and specified by a person, then checked by the gates I'll get to below. "Agents typed four in five commits" is the exact claim. Nothing more.
 
-Second, the names do not mean what they seem to mean. "Codex Automation" is the git name on DK's automation setup, not one model. Most of its commits carry a Claude co-author line: Opus 5.5, Fable 5, Fable 5.1, Opus 5 and Sonnet 5 all appear. "dk", with curly quotes that a config typo made permanent, is the name on DK's own agent sessions. And as you saw above, most of my own recent commits were also written by an agent.
+Second, the names don't mean what they look like they mean. "Codex Automation" is the git name on DK's automation setup, not one model, and most of its commits carry a Claude co-author line: Opus 5.5, Fable 5, Fable 5.1, Opus 5 and Sonnet 5 all show up. "dk", curly quotes and all, is the name on DK's own agent sessions. And as you saw above, most of my own recent commits were written by an agent too.
 
-The co-author lines make the repo a record of the models that built it. Count them and you can date any stretch of the code by which model's name is on it:
+Those co-author lines turn the repo into a record of the models that built it. Count them and you can carbon-date any stretch of the code by the model's name on it:
 
 | Model | Commits with its co-author line |
 |---|---|
@@ -53,9 +55,9 @@ The co-author lines make the repo a record of the models that built it. Count th
 
 ## The constitution
 
-Most "I let AI write my code" posts skip this part. I think it is the only part that matters.
+Most "I let AI write my code" posts skip this part. I think it's the only part that matters.
 
-Agents in FPLGuru work under a set of documents in the repo. The order they arrived in is a timeline of the workflow growing up:
+Agents in FPLGuru work under a set of documents that live in the repo. The order they arrived in is basically a timeline of our workflow growing up:
 
 | Document | Added | Added by |
 |---|---|---|
@@ -64,26 +66,26 @@ Agents in FPLGuru work under a set of documents in the repo. The order they arri
 | `CONTRIBUTING.md` | 19 Apr 2026 | DK's agent session |
 | `docs/ADVISOR_MODEL.md` | 1 Jul 2026 | Codex Automation |
 
-The first instructions were written by a human for the machines. The most detailed process document, the one about how models should *think*, was written by a machine.
+The first instructions were written by a human, for the machines. The most detailed process document, the one about how models should *think*, was written by a machine.
 
 The core idea of that document fits in one line from it: advisors decide and de-risk, builders implement.
 
-- **Advisor models** handle ambiguity. They turn a request into a spec, a plan and GitHub issues with acceptance criteria.
-- **Builder models** take one issue at a time. They branch, write a failing test first, implement only the agreed scope, check it, and open a pull request. If a builder wants to change the product direction, it must send the question back to an advisor instead of deciding.
+- **Advisor models** handle ambiguity. They turn a request into a spec, a plan, and GitHub issues with acceptance criteria.
+- **Builder models** take one issue at a time. They branch, write a failing test first, implement only the agreed scope, check it, and open a pull request. If a builder wants to change the product direction, it has to send the question back to an advisor instead of deciding on its own.
 
-And one rule sits above the rest, in the project conventions: **"Never auto-commit, always ask before committing."** Agents can read anything, write anything, run anything and propose anything. Inside a session, they ask before they make it permanent.
+And one rule sits above the rest, right there in the project conventions: **"Never auto-commit, always ask before committing."** Agents can read anything, write anything, run anything and propose anything. Inside a session, they ask before they make it permanent.
 
-`CLAUDE.md` is no longer a small note. It is the file you have to read before you touch anything, and it is long because every hard lesson in this post ended up in it.
+`CLAUDE.md` isn't a small note any more. It's the file you have to read before you touch anything, and it's long because every hard lesson in this post ended up in it.
 
-## Fable 5: the week the agents surprised me
+## Fable 5, and the week everything changed
 
-Every builder I know who works with agents has a moment when the tool stopped being a tool. Mine was Fable 5.
+Everyone I know who builds with agents has a moment when the tool stopped feeling like a tool. Mine was Fable 5.
 
-Its first co-author line in our repo is dated 9 June 2026. I would give it a small feature task, and it would work out all the changes that the feature needed and the blast radius of each one. It made the changes to match. Then it wrote tests on its own, when the prompt only said to implement the feature. Nobody asked it for tests. It just knew a careful engineer would write them.
+Its first co-author line in our repo is dated 9 June 2026. I'd give it a small feature task, and it would figure out all the changes the feature needed and the blast radius of each one, and make the changes to match. Then it would write tests on its own, when the prompt was just to implement the feature. Nobody asked it for tests. It just knew a careful engineer would write them.
 
-As I remember it, Fable 5 was pulled from release for about a week by the US government, and then came back. In that first week, I think it was probably the best model in the world. I had the feeling we had entered a whole new era of AI.
+In the one week before the US government pulled it (it came back later), I think Fable 5 was probably the best model out there in the world. I genuinely felt we'd entered a whole new era of AI.
 
-You can see it in the log. In June, "dk" made 363 commits and Claude made 110. Then on 25 June, a new author appeared: Codex Automation. By August it was the largest author in the repo for the month, with 697 commits. The humans had stopped being the people who type.
+You can see it in the log. In June, "dk" made 363 commits and Claude made 110. Then on 25 June a new author showed up: Codex Automation. By August it was the biggest author in the repo for the month, with 697 commits. The humans had stopped being the people who type.
 
 ## Opus 5 and the slop
 
@@ -91,98 +93,100 @@ Then we made a decision for money, and it nearly stopped the project.
 
 Fable 5 was much better than anything before it, but it was too expensive to run all day. So we moved the work to Opus 5. Its first co-author line is dated 25 July.
 
-Opus 5 was the worst model I have worked with. It would hallucinate. It would skip instructions. It wrote super technical jargon and long, twisted English sentences. I came very close to pausing all development.
+Opus 5 was the worst model I've worked with. It would hallucinate. It would skip instructions. It would spew out super technical jargon and convoluted English sentences that I then had to decode. I came very close to pausing all development.
 
-DK's answer was not to give up on the agents. It was to build a better harness for them. He built a "software factory" skill called **Olympus**, which arrived in the repo on 28 August. Olympus carefully steers several agents through a complex task. Each agent gets one role and its own charter, inside a fixed workflow. With Olympus, a model we did not trust alone could still do good work as part of a team.
+DK's answer wasn't to give up on the agents. It was to build a better harness around them. He built a software factory skill called **Olympus**, which landed in the repo on 28 August. Olympus carefully steers multiple agents across a complex task. Each agent gets one role and its own charter, inside a fixed workflow. With Olympus, a model we couldn't trust on its own could still do good work as part of a team.
 
-I want to be fair to Opus 5, because the log is fair to it. On 2 August, an agent with an Opus 5 co-author line wrote this into a commit message:
+To be fair to Opus 5, the log is fair to it. On 2 August, an agent with an Opus 5 co-author line wrote this into a commit message:
 
 > 3\. GREEDY ROUTING WAS A REGRESSION, and it was my change.
 
-Then it gave the measurement that proved it wrong, and reverted itself. I have worked with humans who would not write that sentence. The lesson I took is that the value of the system is not that the machines never make mistakes. It is that the system makes their mistakes show up as evidence.
+Then it posted the measurement that proved it, and reverted itself. I've worked with humans who would never write that sentence. The value of the system isn't that the machines never make mistakes. It's that the system makes their mistakes show up as evidence.
 
 ## The reviewer that never ran out of comments
 
 Every pull request in FPLGuru gets an automated code review. DK built the reviewer, and for a stretch of the summer it ran on GPT-5.6 Sol.
 
-Sol was a difficult reviewer. It always found something to fix, and it gave its review one comment at a time. Fix that comment, and the next round found another. That time was hard, but we powered through.
+Sol was a difficult code reviewer. It would keep finding something or the other to fix, and it would only give it to you one comment at a time. Fix that comment, and the next round found another one. That time was difficult, but we powered through.
 
-On 19 August, one of DK's agents wrote a retrospective with the title "five PRs, seventy-three review rounds." It studied five of my pull requests. Two cleared in five rounds each. The other three took 13, 25 and 25. The in-app feedback form alone took 25 rounds and about 59 findings.
+On 19 August, one of DK's agents wrote a retrospective titled "five PRs, seventy-three review rounds". It studied five of my pull requests. Two cleared in five rounds each. The other three took 13, 25 and 25. The in-app feedback form alone took 25 rounds and about 59 findings.
 
-The surprising conclusion: every finding the reviewer raised was correct. The reviewer was not the problem. The loop was. A fix made in a hurry carried its own new bug, and the next round found it. The number of rounds had nothing to do with how many real problems the first version had. It only measured how patient the reviewer was.
+The surprising conclusion: every single finding was correct. The reviewer wasn't the problem. The loop was. A fix made in a hurry carried its own new bug, and the next round found it. The number of rounds had nothing to do with how many real problems the first version had. It only measured how patient the reviewer was.
 
-We did not slow the agents down. We wrote rules that tell them when to stop. They are in `CONTRIBUTING.md` today, and a builder reads them before it touches code:
+So we didn't slow the agents down. We wrote rules that tell them when to stop. They live in `CONTRIBUTING.md` today, and a builder reads them before it touches any code:
 
 - **Answer a finding with a failing test first.** The first commit reproduces the problem in red. The fix lands on top.
-- **Two rounds in a row that find bugs in your own fixes is a repair stop.** The next comment is not another fix. You name the part of the system, say what the fixes keep getting wrong, revert that part, and check its design again.
-- **A comment cannot authorise more patching.** That sentence is there because it is exactly what an agent will ask for.
+- **Two rounds in a row that find bugs in your own fixes is a repair stop.** The next move isn't another fix. You name the part of the system, say what the fixes keep getting wrong, revert that part, and check its design again.
+- **A comment can't authorise more patching.** That sentence is there because it's exactly what an agent will ask for.
 
-And the rules are under test. A test file pins the key sentences word for word. If anyone, human or machine, softens the repair-stop rule, a test fails.
+And the rules are under test. A test file pins the key sentences word for word, so if anyone, human or machine, softens the repair-stop rule, a test fails.
 
-Two days later, on 21 August, we switched on a **spec-review lane**. Before a large change is built, an automated reviewer reads its spec, especially the "Assumptions" section: every "X is not needed, because Y" that the design depends on. And on 26 August, the label `codex:good-to-merge` first appeared. When the code reviewer is satisfied, it adds that label, and an automation merges the pull request.
+Two days later, on 21 August, we switched on a **spec-review lane**. Before a big change gets built, an automated reviewer reads its spec, especially the "Assumptions" section: every "X isn't needed, because Y" the design leans on. And on 26 August, the label `codex:good-to-merge` showed up for the first time. When the code reviewer is happy, it adds that label, and an automation merges the pull request.
 
 Since 1 September, 2,094 merge commits have landed on `develop`. Eleven of them have my name on them.
 
 ## Trusting the gates
 
-So how can I ship code I do not read? Because I do not trust any single agent. I trust the gates around them.
+So how do I ship code I don't read? Honestly, I don't trust any single agent. I trust the gates around them.
 
-A change in FPLGuru passes through:
+A change in FPLGuru goes through:
 
-1. **A spec**, for anything large, reviewed by the spec-review lane before any code is written.
+1. **A spec**, for anything big, reviewed by the spec-review lane before any code is written.
 2. **A builder**, writing the test first, on its own branch.
-3. **Local CI.** Since 25 September, a pull request into `develop` does not run cloud CI. The agent runs the full suite on its own machine and pushes a proof commit, and the merge gate checks that proof.
+3. **Local CI.** Since 25 September, a pull request into `develop` doesn't run cloud CI. The agent runs the full suite on its own machine and pushes a proof commit, and the merge gate checks that proof.
 4. **The code reviewer**, with the repair-stop rules above.
-5. **Feature flags and config switches.** Most new features ship behind a switch that we can turn off without a deploy, and the risky ones ship switched off. If something is wrong in production, we flip a value in a table.
+5. **Feature flags and config switches.** Most new features ship behind a switch we can turn off without a deploy, and the risky ones ship switched off. If something's wrong in production, we flip a value in a table.
 
-None of those gates is clever on its own. Together, they mean I do not have to be the last line of defence, because I am not the only line.
+None of those gates is clever on its own. Together, they mean I don't have to be the last line of defence, because I'm not the only line.
 
 ## Where it still goes wrong
 
-I promised this series would be honest, so here is the record of things that went wrong, from the log and not from memory.
+I promised this series would be honest, so here's the record of things that went wrong, straight from the log and not from my memory.
 
-**The bug the agents found but did not cause.** On 5 August, an agent pushed `fix(security): stop sending Supabase JWT in API request URLs and bodies`. The frontend had been putting the user's session token into a URL, where proxies log it and browser history keeps it. I checked where that line came from, because I knew the easy story. It came from a commit of mine in April 2025, sixteen months before an agent found it.
+**The bug the agents found but didn't cause.** On 5 August, an agent pushed `fix(security): stop sending Supabase JWT in API request URLs and bodies`. The frontend had been putting the user's session token in a URL, where proxies log it and browser history keeps it. I checked where that line came from, because I knew the easy story to tell. It came from a commit of mine in April 2025, sixteen months before an agent found it. Oops.
 
-**The feature built and reverted on the same day.** On 4 August, an agent built a Stripe checkout and webhook service. On the same day, it was reverted, and a decision record says billing is deferred. The agent did good work. We decided the product was not ready for it. Building is cheap now. Deciding is still expensive, and deciding is the one thing the agents do not do for us.
+**The feature built and reverted on the same day.** On 4 August, an agent built a Stripe checkout and webhook service. The same day, it was reverted, and a decision record says billing is deferred. The agent did good work. We decided the product wasn't ready for it. Building is cheap now. Deciding is still expensive, and deciding is the one thing the agents don't do for us.
 
-**Before all of this, there was the Cursor night.** I told this story in the first post: one request to add a refresh button broke my whole HTML, CSS and JavaScript codebase, and I paid $20 for Windsurf just to fix it. The difference between then and now is not that the models stopped making mistakes. It is that every mistake now hits a test, a reviewer, a stop rule or a switch before it hits a user.
+**And before all of this, there was the Cursor night.** I told that story in [part 1](/blog/building-fplguru-1-from-a-gpt-4-prompt): Cursor messed up my entire HTML, CSS and JavaScript codebase, and I had to buy a $20 Windsurf plan just to fix it. The difference between then and now isn't that the models stopped making mistakes. It's that every mistake now hits a test, a reviewer, a stop rule or a switch before it hits a user.
 
-## Opus 5.5 and round the clock
+## Opus 5.5, and another orbit
 
 The first Opus 5.5 co-author line is dated 23 September. It already has more co-author lines than any other model in the repo: 2,910.
 
-If Fable 5 started a new era, Opus 5.5 put us in another orbit. It hits the sweet spot that Fable 5 could not hit for us: it is good enough to trust with large tasks, and cheap enough to run all day. That is why September looks the way it does. Claude alone made 2,332 non-merge commits that month.
+If Fable 5 started a new era, with Opus 5.5 we hit another orbit. It hits the sweet spot Fable 5 couldn't hit for us: good enough to trust with big tasks, and cheap enough to run all day. That's why September looks the way it does. Claude alone made 2,332 non-merge commits that month.
 
 The way DK and I work now is simple to describe.
 
-We sync every day, on a call or on Slack. We decide what needs to be built. We discuss the high-level design or concept. We point out the problems and the flaws in each other's thinking. When we agree, we hand it to our agents.
+We sync up daily, on a call or on Slack. We decide what needs to be built. We discuss the high-level design idea or concept, and point out any caveats or flaws in each other's thinking. Once we agree, we hand it over to our agents.
 
-I am in India and DK is in California. Our time zones used to be a problem. Now they are a feature. One of us hands work over at the end of the day, and agents keep working while that person sleeps. We are rarely both awake, but FPLGuru ships around the clock.
+I'm in India and DK is in California. Our time zones used to be a problem. Now they're a feature. One of us hands work over at the end of the day, and the agents keep working while that person sleeps. We work in each other's off hours, and FPLGuru still ships round the clock.
 
-Today even the project management is partly an agent. I write a request in a project chat. A coordinator agent opens a thread for it, a thread agent does the work and opens a pull request, the reviewer reviews it, and the automation merges it. I read the results. I will tell that story properly in the last post of this series, about Matchday.
+These days even the project management is partly an agent. I write a request in a project chat. A coordinator agent opens a thread for it, a thread agent does the work and opens a pull request, the reviewer reviews it, and the automation merges it. I read the results. That's the story of the last post in this series, about Matchday.
 
-## What is left for the humans
+## The whole game now is to think
 
-So what do DK and I actually do?
+So what do DK and I actually do all day?
 
-The whole game now is to think. We push back on a lot of design changes that the agents propose. The agents push back on a lot of our review comments, and they are often right. And we keep pushing the agents to take on more complex tasks than we think they can handle, because they keep proving us wrong.
+The whole game now is to think. We push back on a lot of the design changes the agents propose. The agents push back on a lot of our review comments, and they're often right. And we keep pushing the agents to pick up more complex tasks than we think they can handle, because they keep proving us wrong.
 
-We set the goals. We decide what not to build. We decide when to turn a feature on. We choose which model to pay for and which harness to build around it. We write the rules for when to stop. None of that is coding in the sense I learned the word. All of it is the job.
+We set the goals. We decide what not to build. We decide when to turn a feature on. We pick which model to pay for and what harness to build around it. We write the rules for when to stop. None of that is coding the way I learned the word. All of it is the job.
 
-## What I would tell you
+## What I'd tell you
 
-If you are an engineer or an engineering manager, here is what this year taught me.
+If you're an engineer or an engineering manager, here's what this year taught me.
 
-**Write the rules down, in the repo, where the agents read them.** Your conventions are not real until they are in a file an agent loads before every task. Ours started as a small note and became the most important file we have.
+**Write the rules down, in the repo, where the agents read them.** Your conventions aren't real until they're in a file an agent loads before every task. Ours started as a small note and became the most important file we have.
 
-**Do not trust a model. Trust a system of gates.** One reviewer, one test suite or one model will fail. A stack of cheap, independent checks fails much less often.
+**Don't trust a model. Trust a system of gates.** One reviewer, one test suite or one model will fail. A stack of cheap, independent checks fails a lot less often.
 
-**Teach your agents when to stop.** Agents never get tired, so they will patch forever. The most useful rule we wrote was not about how to build. It was about when to revert.
+**Teach your agents when to stop.** Agents never get tired, so they'll patch forever if you let them. The most useful rule we wrote wasn't about how to build. It was about when to revert.
 
 **The model matters more than you want it to.** Opus 5 nearly ended this project. Fable 5 and Opus 5.5 changed what two people can do. Try every new model on your real work, quickly, and be ready to change your harness when the model changes.
 
-**Spend your time on thinking.** The typing is not the job any more. The deciding is.
+**Spend your time thinking.** The typing isn't the job any more. The deciding is.
 
-Two years ago I was one person with a GPT-4 prompt that did not know Sokratis had left Arsenal. Today I am one of two people directing a team of agents that ships thousands of commits a month. I still do not read the code. I read the decisions.
+In 2023 I was one guy with a GPT-4 prompt that didn't know Sokratis had left Arsenal. Today I'm one of two people directing a team of agents that ships thousands of commits a month.
 
-The next post is about a decision no agent would have made: why an FPL analytics app ships daily trivia games.
+I still don't read the code. I read the decisions.
+
+*Next in Building FPLGuru: a decision no agent would have made. Why an FPL analytics app ships daily trivia games.*
