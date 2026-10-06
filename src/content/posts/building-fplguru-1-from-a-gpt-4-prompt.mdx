@@ -1,0 +1,147 @@
+---
+title: "Building FPLGuru #1: From a GPT-4 Prompt to FPLGuru"
+date: 2026-10-06
+category: tech
+description: "GPT-4 told me to sign a defender who had left Arsenal two years earlier. That one bad answer, a lot of late nights and a $20 Windsurf plan turned into FPLGuru. Part 1 of a series on how it got built."
+draft: true
+---
+
+*Part 1 of Building FPLGuru, a series on how two friends and a lot of AI agents built a Fantasy Premier League app, from the first commit to Matchday.*
+
+In March 2023, I asked GPT-4 to help me with my Fantasy Premier League team.
+
+It suggested Sokratis as a cheap Arsenal defender.
+
+Sokratis had left Arsenal two years earlier. If you play FPL, you know this. It's not an obscure name. GPT-4 didn't know, and it recommended him anyway, with full confidence, in perfect English.
+
+That answer is the reason FPLGuru exists.
+
+This series is the story of how it got built: two years of commits, three frontends, one friend, and by the end, more AI agents than humans in the commit log. Let me start at the beginning…
+
+## Ten years of being average
+
+I've played FPL since the 2010/11 season. For most of that time I was solid and forgettable. My best overall ranks were 230K in 2011/12, 430K in 2014/15 and 530K in 2020/21. Fine. Never great.
+
+If you play, you know the Friday night problem. The deadline is tomorrow. You have one free transfer, two midfielders who look exactly the same, a captain pick you've changed four times, and a Bench Boost you've been saving since August. The data is all out there. The FPL API is public. xG is one Google search away. What's missing at 11pm is someone who takes all of it and says: for *your* team, do this, and here's why.
+
+When GPT-4 came out, it looked like that someone. The reasoning was genuinely good. It understood fixtures and form, and why you might take a punt on a differential captain when you're chasing a mini-league. It sounded like the FPL podcasts I'd listened to for years, except it was awake at midnight and never got tired of my follow-up questions.
+
+And then it picked Sokratis.
+
+It took me about five minutes to see the problem. The model could reason. It just didn't know what was true *this week*, and in FPL, news from three hours ago can decide your gameweek. The reasoning was available. The data was always available. Nobody had joined the two for FPL.
+
+## Nights for the API, weekends for everything else
+
+So I did what engineers do. I wrote Python scripts against the FPL API and fed the model real data instead of letting it improvise.
+
+Nothing grand. One script found the most in-form differential. One plotted my points across the season. One picked the best formation from my squad based on form. Every one of them later became an FPLGuru feature.
+
+I coded at night and on weekends, and there was a rhythm to it. Nights were for building features on top of the FPL API. Weekends were for everything else, because the FPL API used to go down or go stale while the matches were on. Nothing teaches you to design around a flaky data source faster than a data source that takes Saturday afternoons off.
+
+The real "wow" moment wasn't a script, though. It was the first time I put something visual on top. Plain HTML and CSS, then some JavaScript. Once I could *see* my team instead of reading numbers in a terminal, I was hooked.
+
+## The AI-assisted era
+
+I want to be honest about how this code got written, because the rest of this series depends on it.
+
+I started by copy-pasting code from ChatGPT. That's how the first version got built. Later, when Cursor and Windsurf launched, I moved to Cursor, and Cursor promptly messed up my entire HTML, CSS and JavaScript codebase. All I'd asked for was a refresh button on every page. I bought the $20 Windsurf plan just to fix the damage, and then stayed on Windsurf for months.
+
+So the tools wrote the code, and I fixed it by hand wherever they messed up. It was the AI-assisted coding era: the AI typed, and I was the safety net. The ideas were just in my head. There was no spec and no doc, and the git history will happily show you that the first version of the dashboard was plain HTML, CSS and JavaScript.
+
+## "First commit"
+
+The first commit is dated 6 September 2024. The message, in full, is "First commit".
+
+61 files. 6,170 lines. A Flask backend in one `app.py`. A frontend of plain HTML pages, one per feature, each with its own vanilla JavaScript file and its own stylesheet: `dashboard.html`, `chip-strategy.html`, `differential-picks.html`, `price-changes.html`, `team-optimization.html`. No build step. No tests. No README. It ran on `python3 -m http.server`.
+
+Two things in that commit still make me smile.
+
+First, AI was there from hour one. Before there was a database or a login, there was an OpenAI call: `gpt-4o-mini` summarising FPL news. Almost everything else in the product has changed since. That never did.
+
+Second, look at the backend file names: `fpl_analyzer.py`, `fpl_recommender.py`, `fpl_team_optimizer.py`, `fpl_budget_manager.py`. Two years and about eleven thousand commits later, the deterministic engine in the repo still has an `analyzer.py`, a `recommender.py`, a `team_optimizer.py` and a `budget_manager.py`. They've been rewritten, tested and wrapped in layers I couldn't have imagined back then. But the shape of the problem I sketched in that first commit is still the shape of the product.
+
+The commit also had a few things that should never be in a repo, like compiled `.pyc` files and my IDE folder. Every "how I built it" story has a commit like this. Most people just don't show you theirs.
+
+And then, having built it, I stopped.
+
+## Six months of nothing, then Sonnet 3.7
+
+After 6 September 2024, the repo went quiet for six months. The season was on, work was busy, and FPLGuru was exactly what it looked like: a weekend project that had had its weekend.
+
+On 3 March 2025, a commit called "March 2025 update" brought it back. This time it stuck.
+
+It wasn't discipline. It was a model. Claude 3.7 Sonnet launched in late February 2025, and from then on the LLMs got much better at agentic coding. The things I used to fix by hand, the model now got right more often than not. Picking the project back up suddenly got cheap, so I picked it back up.
+
+That month I rebuilt the dashboard and added player search and dark mode. By the end of March there were landing, login and waitlist pages. In April, Supabase came in for auth and storage, and the vanilla JavaScript made way for a proper React and TypeScript frontend (pull request #1, merged on 21 April 2025). The first real account was created on 13 April 2025.
+
+A waitlist. For a tool nobody had asked for. I'd decided this thing might deserve users other than me.
+
+## Chat, take one
+
+In July 2025 came the feature the whole idea had been waiting for: chat.
+
+The first version ran on `gpt-3.5-turbo`. In front of it sat a small classifier that worked out what kind of question you'd asked (captaincy, transfers, a player comparison) and pulled the right FPL data into the prompt before the model answered. It was the March 2023 experiment, finally inside a product: real data plus a language model, answering questions about your team.
+
+It also taught me a hard lesson. **A general model with data stuffed into its context window is a demo, not an advisor.** It still made confident mistakes, and in this game a confident mistake costs someone rank. Fixing that properly took another year and went much further than I expected. That's the story of posts 2 and 5.
+
+For the rest of 2025 the commit log is thin. Some months have five commits. FPLGuru was alive, but it was a side project in the most literal sense.
+
+## The month I let go of the keyboard
+
+Then the end of 2025 happened.
+
+With the Opus models and Claude Code, agentic coding became super easy. Claude Code made life easier than anything before it, and for the first time I was able to trust the models to work on their own. Not "write me a function and I'll check it". More like "here's the change, go work through the codebase, then show me what you did".
+
+You can see it in the log. On 21 December 2025, a file called `CLAUDE.md` showed up in the repo for the first time: a guide that tells an AI agent how this codebase works. Today it's one of the most important files in the project. Back then it was a small note.
+
+A month later, on 21 January 2026, a backend re-architecture with tests merged (pull request #4). The same day, the whole frontend moved from Material UI to shadcn/ui and Tailwind, component by component, page by page, and the last MUI dependency was gone before the day ended. A frontend rewrite used to take weeks. This one took a day.
+
+The chat got rebuilt too. Instead of me guessing what data a question needed, a GPT-4o agent built on LangChain got a toolbox: transfer analysis, captain picks, fixture difficulty, player search, squad optimisation and more, sixteen tools in all. The model learned to reach for the right one.
+
+On 14 February 2026, the git log records the first commit with Claude as the author. It added streaming chat responses, which felt like a fitting first job. Two days later the backend was ready for Railway. On 18 February the sign-in flows were reworked for a closed alpha, and FPLGuru went live on fplguru.com, invite only.
+
+By the end of February 2026, it had 14 accounts.
+
+## Enter DK
+
+Somewhere along the way, I showed what I'd built to Divyekant.
+
+Divyekant is a work colleague and now a great friend. He's a football and FPL fan himself, so he was super excited the moment he saw it. Some context: I'm an Arsenal fan and he's a Man United fan, and most of our football conversations are banter. FPLGuru gave the banter somewhere useful to go.
+
+Apart from being a friend, Divyekant, AKA DK, has a great product-building mind. His first commits landed in April 2026. He took on the points prediction, xPts as we know it now, and brought in XGBoost to predict it. Then he took over the AI chat and trained a small open model, Gemma, on past FPL data. Since then he's built most of the tooling behind how we work today: the Codex code-review automation, the spec-review automation, the CI/CD pipelines, Olympus (our framework for a software factory), the new design guidelines and a lot of the refactoring.
+
+DK also has a much more AI-native mindset than I had. We keep each other updated on everything cutting-edge in AI, and then we try it out in FPLGuru. That's how Jev ended up in our chat, which is a story for the next post.
+
+What happened after he joined is easier to show than to describe. Here are commits per month:
+
+| Month | Commits |
+|---|---|
+| Feb 2026 | 78 |
+| Apr 2026 | 455 |
+| Jun 2026 | 743 |
+| Aug 2026 | 1,334 |
+| Sep 2026 | 5,106 |
+
+Two humans didn't start typing sixty-five times faster. The way the work got done changed. That's post 3.
+
+## What I'd tell you
+
+I started building FPLGuru to help me plan my own FPL season better.
+
+Last season, while I was building it and using it on my own team, I finished 87,870th in the world with 2,332 points, in the top 0.7% of all managers. In India I finished somewhere around 7,000th. In 10+ years of playing FPL, it's my best rank ever, by a distance. I'd love to call that pure skill. I know where some of the help came from.
+
+Today 160 people have an FPLGuru account. That's not a big number. But I guess we've helped each one of them a little bit, and every one of them showed up because they had the same problem I had.
+
+So here's what I'd tell anyone building something with AI tools.
+
+**Pick a problem you have, and solve it.** Once you've solved it, find the people who have the same problem and reach out to them with your solution. That's the only way I know to get genuine adoption. If you're not your own first user, you're guessing.
+
+**Spend a little time and money on new tools, early.** I put $20 into Windsurf when it was a small company. I started using Claude Code when it was still in beta. DK and I have tried so many tools in the months after they launched, just to see if we had a real use case for them. It made both of us much sharper on what these tools can actually do. We even built an MCP server for FPLGuru partly just to learn how to build one.
+
+**And here's what I'd change.** I took too long to adapt. For a long time I kept trying to bolt AI onto my existing beliefs and my existing process, instead of rewiring myself to think from first principles. DK helped me a lot here. Over the last year my horizons have broadened, and now I go in head first.
+
+So try everything. Learn, fail, and iterate as fast as you possibly can.
+
+GPT-4 wanted Sokratis in my defence. Eleven thousand commits later, FPLGuru at least knows who plays for Arsenal.
+
+*Next in Building FPLGuru: the hardest part of the product, and the part I understood least when I started. Teaching a machine to play FPL.*

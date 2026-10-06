@@ -1,6 +1,7 @@
 ---
 import Base from "@/layouts/Base.astro";
 import { getCollection } from "astro:content";
+import { isListed } from "@/lib/drafts";
 
 interface Entry {
   id: string;
@@ -12,7 +13,7 @@ interface Entry {
 }
 
 const externals = await getCollection("blog");
-const locals = await getCollection("posts", ({ data }) => !data.draft);
+const locals = await getCollection("posts", ({ data }) => isListed(data));
 
 const entries: Entry[] = [
   ...externals.map((p) => ({
