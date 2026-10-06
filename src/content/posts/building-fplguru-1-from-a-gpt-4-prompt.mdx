@@ -44,13 +44,9 @@ The real "wow" moment wasn't a script, though. It was the first time I put somet
 
 I want to be honest about how this code got written, because the rest of this series depends on it.
 
-I started by copy-pasting code from ChatGPT. When Cursor and Windsurf launched, I moved to Cursor. Then Cursor messed up my code so badly that I bought the $20 Windsurf plan just to fix it, and I stayed on Windsurf for months after that.
+I started by copy-pasting code from ChatGPT. That's how the first version got built. Later, when Cursor and Windsurf launched, I moved to Cursor, and Cursor promptly messed up my entire HTML, CSS and JavaScript codebase. All I'd asked for was a refresh button on every page. I bought the $20 Windsurf plan just to fix the damage, and then stayed on Windsurf for months.
 
-So the tools wrote the code, and I fixed it by hand wherever they messed up. It was the AI-assisted coding era. The ideas were just in my head. There was no spec and no doc, and if you look at the git history, the first version of the dashboard is plain HTML, CSS and JavaScript.
-
-The Cursor night taught me the first real lesson of building with AI. I had no version control. Seven or eight features were working on my laptop, I asked for one small thing (a refresh button on every page), and the whole project got shredded. If an AI is going to write half your code, every version of that code has to be recoverable.
-
-So I finally created a GitHub repo.
+So the tools wrote the code, and I fixed it by hand wherever they messed up. It was the AI-assisted coding era: the AI typed, and I was the safety net. The ideas were just in my head. There was no spec and no doc, and the git history will happily show you that the first version of the dashboard was plain HTML, CSS and JavaScript.
 
 ## "First commit"
 
@@ -62,7 +58,7 @@ Two things in that commit still make me smile.
 
 First, AI was there from hour one. Before there was a database or a login, there was an OpenAI call: `gpt-4o-mini` summarising FPL news. Almost everything else in the product has changed since. That never did.
 
-Second, look at the backend file names: `fpl_analyzer.py`, `fpl_recommender.py`, `fpl_team_optimizer.py`, `fpl_budget_manager.py`. Two years and about eleven thousand commits later, the deterministic engine in the repo still has an `analyzer.py`, a `recommender.py`, a `team_optimizer.py` and a `budget_manager.py`. They've been rewritten, tested and wrapped in layers I couldn't have imagined that night. But the shape of the problem I sketched on my first weekend is still the shape of the product.
+Second, look at the backend file names: `fpl_analyzer.py`, `fpl_recommender.py`, `fpl_team_optimizer.py`, `fpl_budget_manager.py`. Two years and about eleven thousand commits later, the deterministic engine in the repo still has an `analyzer.py`, a `recommender.py`, a `team_optimizer.py` and a `budget_manager.py`. They've been rewritten, tested and wrapped in layers I couldn't have imagined back then. But the shape of the problem I sketched in that first commit is still the shape of the product.
 
 The commit also had a few things that should never be in a repo, like compiled `.pyc` files and my IDE folder. Every "how I built it" story has a commit like this. Most people just don't show you theirs.
 
@@ -86,7 +82,7 @@ In July 2025 came the feature the whole idea had been waiting for: chat.
 
 The first version ran on `gpt-3.5-turbo`. In front of it sat a small classifier that worked out what kind of question you'd asked (captaincy, transfers, a player comparison) and pulled the right FPL data into the prompt before the model answered. It was the March 2023 experiment, finally inside a product: real data plus a language model, answering questions about your team.
 
-It also taught me lesson number two. **A general model with data stuffed into its context window is a demo, not an advisor.** It still made confident mistakes, and in this game a confident mistake costs someone rank. Fixing that properly took another year and went much further than I expected. That's the story of posts 2 and 5.
+It also taught me a hard lesson. **A general model with data stuffed into its context window is a demo, not an advisor.** It still made confident mistakes, and in this game a confident mistake costs someone rank. Fixing that properly took another year and went much further than I expected. That's the story of posts 2 and 5.
 
 For the rest of 2025 the commit log is thin. Some months have five commits. FPLGuru was alive, but it was a side project in the most literal sense.
 
