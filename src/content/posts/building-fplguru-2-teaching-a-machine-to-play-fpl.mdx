@@ -2,25 +2,27 @@
 title: "Building FPLGuru #2: Teaching a Machine to Play FPL"
 date: 2026-10-06
 category: tech
-description: "How FPLGuru's predictions went from a rounded average to 40 XGBoost models, why we trained our own chat model, and why we stopped using it. Part two of a series on building FPLGuru."
+description: "FPLGuru's first prediction model was one line of Python. Two years later it's 40 XGBoost models, a layer that knows when to tell you to do nothing, and a chat model we trained ourselves and then retired. Part 2 of a series."
 draft: true
 ---
 
-In the first version of FPLGuru, this was the prediction engine:
+*Part 2 of Building FPLGuru. [Part 1](/blog/building-fplguru-1-from-a-gpt-4-prompt) was the origin story.*
+
+This was FPLGuru's first prediction engine:
 
 ```python
 predicted = round(points_per_game) or 2
 ```
 
-Take a player's average points per game. Round it. If that comes out as zero, call it two. That was the "model" in my first commit, in September 2024.
+Take a player's average points per game. Round it. If that comes out as zero, call it two. That was the "model" in my first commit, in September 2024. Peak data science.
 
-This post is about how that line became 40 machine learning models, an expected-value layer that tells you when *not* to make a transfer, and a chat model that we trained ourselves, ran on a Mac Mini, and then replaced. It is the most technical post in the series. It is also the one where I did the least of the work, and I want to be upfront about that.
+This post is about how that one line became 40 machine learning models, a layer that tells you when *not* to make a transfer, and a chat model we trained ourselves, ran on a Mac Mini, and then replaced. It's the most technical post in the series. It's also the one where I did the least of the work, so let me say that up front: almost all of what follows was DK's.
 
-## The formula era
+## Guessing, with confidence
 
-For most of 2025 and early 2026, FPLGuru's predictions came from formulas that I wrote by hand.
+For most of 2025 and early 2026, FPLGuru's predictions came from formulas I wrote by hand.
 
-The best version of that engine, which we now call Guru Engine V1, landed in February 2026. It is still in the codebase as a fallback. In plain terms, it does this:
+The best version of that engine, which we now call Guru Engine V1, landed in February 2026. It's still in the codebase as a fallback. In plain terms, it does this:
 
 ```python
 own_estimate = form * 0.6 + points_per_game * 0.4
@@ -31,130 +33,136 @@ prediction  *= chance_of_playing / 100
 # zero the blank gameweeks, boost the doubles
 ```
 
-It is a decent engine. It is fast, it is deterministic, and it leans on FPL's own `ep_next` projection for 60% of its answer, because that projection is free and better than anything I could guess.
+It's a decent engine. It's fast, it's deterministic, and it leans on FPL's own `ep_next` projection for 60% of its answer, because that projection is free and better than anything I could guess.
 
-But every number in it is a guess. Why is form weighted 0.6 and points per game 0.4? Because that felt right. You can tune a formula like this forever and never know if you are making it better or just fitting your own opinions harder.
+But every number in it *is* a guess. Why is form weighted 0.6 and points per game 0.4? Because it felt right. You can tune a formula like this forever and never know if you're making it better or just fitting your own opinions harder.
 
-To know, you have to measure. And once you measure, you may as well let a machine pick the weights.
+To know, you have to measure. And once you measure, you might as well let a machine pick the weights.
 
 ## DK's brainchild
 
-I said in the last post that Divyekant (DK) joined me on FPLGuru in April 2026. The engine was the first thing he took on, and I want to be clear: all of it was his idea.
+In the last post I mentioned that Divyekant, AKA DK, joined FPLGuru in April 2026. The engine was the first thing he took on, and all of it was his brainchild.
 
-I am normally sceptical about handing my project to anyone. In this case DK was the right person. He has a product mind, and he understands prediction and recommendation models in depth. I did not. For me, the engine was a learning experience. My knowledge of XGBoost, predictions and LLM fine-tuning was barely anything before. Thanks to DK, it is real now.
+Normally I'd be skeptical about handing my project to anyone. But DK was the right person, not just because of his product mindset, but because he understood prediction and recommendation models in depth. I didn't. For me, the whole engine was a learning experience. Thanks to DK, my knowledge of XGBoost, predictions and LLM fine-tuning is much better than it was before, which was barely anything.
 
-He started by building it *outside* FPLGuru. It was a separate service called fplReco, with its own repo and its own release cycle. The reasoning was sound. The machine learning was the risky part: models, features, evaluations and constant retraining. On its own track, it could fail and get rewritten without breaking the app I was showing to alpha users.
+He started by building it *outside* FPLGuru, as a separate service called fplReco, with its own repo and its own release cycle. The reasoning was sound. The machine learning was the risky part: models, features, evaluations and constant retraining. On its own track, it could fail and get rewritten without breaking the app I was showing to alpha users.
 
-On 7 April 2026, DK wrote the integration into FPLGuru in one day. It is the part I find most instructive as an engineer:
+## "Permanently", for three days
 
-- **Feature flags per feature.** Captain, transfers, chips and chat could each be routed to V1 or V2, with a rollout percentage, an allowlist, a fallback and a timeout. These flags live in a Supabase table, so a change needs no redeploy.
+On 7 April 2026, DK wired fplReco into FPLGuru in one day. As an engineer, this is the part I find most worth copying:
+
+- **A feature flag per feature.** Captain, transfers, chips and chat could each be routed to V1 or V2, with a rollout percentage, an allowlist, a fallback and a timeout. The flags live in a Supabase table, so flipping one needs no redeploy.
 - **Shadow mode.** Serve the user V1, run V2 in the background, and log the difference.
-- **A circuit breaker.** After three failures in a row, stop calling V2 for 60 seconds.
+- **A circuit breaker.** Three failures in a row and we stop calling V2 for 60 seconds.
 
-The design document said the two engines would "coexist permanently" as separate services. Three days later, on 10 April, fplReco was running inside the FPLGuru backend as a packaged library. On 4 May, it moved into the repo as source code, and became Guru Engine V2.
+The design doc said the two engines would "coexist permanently" as separate services. Three days later, on 10 April, fplReco was running inside the FPLGuru backend as a packaged library. On 4 May it moved into the repo as source code and became Guru Engine V2.
 
-"Permanently" lasted three days. The reasons were ordinary ones. Cloudflare's firewall did not like the headers the OpenAI SDK sent, the warm-up threads caused memory problems, and the audit we needed (does the model see the same inputs in serving as in training?) was only practical with one process and one repo. The careful architecture was right for the first week and wrong for every week after.
+"Permanently" lasted three days.
 
-I will also admit something the old draft of this post admitted: the shadow mode never ran long enough to give us real comparison data. The project moved faster than its own safety process. We decided on V2 using model evaluations and hands-on testing.
+The reasons were boring ones. Cloudflare's firewall didn't like the headers the OpenAI SDK sent. The warm-up threads caused memory problems. And the audit we really needed (does the model see the same inputs in serving as it did in training?) was only practical with one process and one repo. The careful architecture was right for the first week and wrong for every week after.
+
+I'll also admit something: shadow mode never ran long enough to give us real comparison data. The project moved faster than its own safety process. We picked V2 based on model evaluations and hands-on testing.
 
 ## How the engine thinks
 
-Here is Guru Engine V2, as simply as I can put it.
+Here's Guru Engine V2, as simply as I can put it.
 
 **One model per position.** Goalkeepers, defenders, midfielders and forwards each get their own XGBoost model, because they score points in completely different ways. A defender's points are mostly clean sheets. A forward's are goals.
 
-**Ten models per position.** Each position is an ensemble of ten models trained with different random seeds, and the prediction is their median. It started with three. It went to ten in May for a very practical reason: with three seeds, the noise between seeds was bigger than the real improvements we were trying to measure. We needed a quieter measuring tool before we could trust any result.
+**Ten models per position.** Each position is an ensemble of ten models trained with different random seeds, and the prediction is their median. It started with three. It went to ten in May for a very practical reason: with three seeds, the noise *between* seeds was bigger than the improvements we were trying to measure. We needed a quieter ruler before we could trust anything we measured with it.
 
-**Two questions, not one.** This is the most important design choice in the engine. The models train only on rows where the player actually played. So what they learn is *how many points will he score if he plays?* At serving time, that is multiplied by a separate answer to *will he play at all?*:
+**Two questions, not one.** This is the most important design choice in the whole engine. The models train only on rows where the player actually played, so what they learn is *how many points will he score if he plays?* At serving time, that gets multiplied by a separate answer to *will he play at all?*:
 
 ```python
 start_prob = min(rolling_5_minutes / 90, chance_of_playing / 100)
 xpts = start_prob * points_if_he_plays
 ```
 
-"Will he play?" and "how many points if he does?" have completely different evidence. Splitting them was the biggest single improvement in how the engine reasons.
+"Will he play?" and "how many points if he does?" have completely different evidence behind them. Splitting the two was the single biggest improvement in how the engine reasons.
 
-**Data from outside FPL.** Training uses public FPL history plus Understat (xG, xA, and team numbers like expected goals against and pressing), FBref, Transfermarkt values, and even weather.
+**Data from outside FPL.** Training uses public FPL history plus Understat (xG, xA, and team numbers like expected goals against and pressing), FBref, Transfermarkt values, and even the weather.
 
-The first time it shipped, the result was clear. The mean absolute error was **0.84 to 1.11 points per player per gameweek** across positions, against **1.82** for the hand-tuned formula. Note that we tightened the evaluation method several times after that. Each change made the numbers look worse and the measurement more honest. So do not read those as one improvement curve.
+The first time it shipped, the mean absolute error was **0.84 to 1.11 points per player per gameweek** across positions, against **1.82** for my hand-tuned formula. One caveat: we tightened the evaluation method several times after that. Every change made the numbers look worse and the measurement more honest, so please don't read those as one tidy improvement curve.
 
 ## Features have to earn their place
 
 My favourite engineering story in this whole project happened mostly while DK was asleep.
 
-In May 2026, he ran an autonomous agent loop over the feature set. Every few minutes it trained a model with a candidate group of features, evaluated it, and made a ship-or-drop decision against a fixed bar: at least 0.3% better mean absolute error for a position, or it does not ship. Every decision went into a ledger, with its number.
+In May 2026, he pointed an autonomous agent loop at the feature set. Every few minutes it trained a model with a candidate group of features, evaluated it, and made a ship-or-drop call against a fixed bar: at least 0.3% better mean absolute error for a position, or it doesn't ship. Every decision went into a ledger, with its number next to it.
 
 Some of what it found:
 
-- **The biggest win was a column we forgot.** The goalkeeper model had never been given saves. Months of careful modelling, and the largest single lift (+4.8%) came from plugging in the obvious stat.
-- **Many "obvious" features did nothing.** Bookmaker odds: dropped. Club Elo ratings: dropped. "Due a goal" features based on xG: exactly +0.000%. The baseline features already carried that signal.
-- **Some wins were not real.** One result looked beautiful across four positions at once. A leakage test caught it. The ledger entry still says "DO NOT TRUST" next to it.
-- **The forward model saturates fast.** After about six features, adding more does nothing. Forwards are not short of features. They are short of evidence. What a forward does most is get rotated, get injured, and be random.
+- **The biggest win was a column we forgot.** The goalkeeper model had never been given saves. Months of careful modelling, and the largest single lift (+4.8%) came from plugging in the most obvious stat in the game.
+- **Lots of "obvious" features did nothing.** Bookmaker odds: dropped. Club Elo ratings: dropped. "Due a goal" features built on xG: exactly +0.000%. The baseline features already carried that signal.
+- **Some wins weren't real.** One result looked beautiful across four positions at once. A leakage test caught it. The ledger entry still says "DO NOT TRUST" next to it.
+- **The forward model saturates fast.** After about six features, adding more does nothing. Forwards aren't short of features. They're short of evidence. What a forward does most is get rotated, get injured, and be random.
 
-And here is the number I respect most. On the development data, the whole feature campaign looked like a big win. On a clean holdout of a season the models had never seen (21,533 rows), the improvement was about **0.04 to 0.05 points per player per position**. About 57% of the development gain survived.
+And here's the number I respect most. On the development data, the whole feature campaign looked like a big win. On a clean holdout season the models had never seen (21,533 rows), the improvement was about **0.04 to 0.05 points per player per position**. Roughly 57% of the development gain survived.
 
-That is not a headline number. It is a true one. "We added machine learning" is not a milestone. Measuring honestly, and refusing to ship the features that fail a bar you set *before* you saw the result, is the job.
+That's not a headline number. It's a true one. "We added machine learning" isn't a milestone. Measuring honestly, and refusing to ship the features that fail a bar you set *before* you saw the result, is the actual job.
 
 ## From points to decisions
 
-A points prediction is not advice. FPL is a game of rules: 15 players, £100m, three per club, a limited number of free transfers, four chips and one deadline a week. So on top of the models sits a layer that turns predictions into decisions.
+A points prediction isn't advice. FPL is a game of rules: 15 players, £100m, three per club, a limited number of free transfers, four chips and one deadline a week. So on top of the models sits a layer that turns predictions into decisions.
 
-The base is a **prediction table**: expected points for every player over the next five gameweeks. The first version called the model once per player per gameweek, which was over 26,730 calls. The batched version makes about 20. Today the table is built once by a background job and published, and every page and every chat answer reads the same table. Requests never build one.
+The base is a **prediction table**: expected points for every player over the next five gameweeks. The first version called the model once per player per gameweek, which was over 26,730 calls. The batched version makes about 20. Today the table is built once by a background job and published, and every page and every chat answer reads that same table. A request never builds one.
 
-That last rule came from a bug. In late September, one player (Isak, for gameweek 6) had three different projections on three surfaces: 4.6 from V2, 7.8 from the old optimiser and 1.1 on the transfer pitch. Each page was quietly computing its own number. The fix was a rule we now call "one projection source": every surface reads the one published table, or says the projection is not ready yet.
+That last rule came from a bug. In late September, one player (Isak, for gameweek 6) had three different projections on three different screens: 4.6 from V2, 7.8 from the old optimiser and 1.1 on the transfer pitch. Each page had been quietly computing its own number. The fix became a rule we now call "one projection source": every surface reads the one published table, or says the projection isn't ready yet. Three numbers for one player is worse than no number at all.
 
 On top of the table:
 
-- **Transfers carry the value of doing nothing.** Every transfer suggestion is compared with holding the transfer. The most common correct answer in FPL is "don't", and an engine that cannot say it is a slot machine.
-- **Hits are maths, not mood.** A transfer that costs four points is only suggested when the expected gain is still positive after the four points.
-- **Captains are not just the highest score.** The engine also looks at what the top 1,000 managers do, because captaining the same player as everyone else rarely moves your rank.
+- **Every transfer is compared with doing nothing.** The most common correct answer in FPL is "don't", and an engine that can't say it is a slot machine.
+- **Hits are maths, not mood.** A transfer that costs four points only gets suggested when the expected gain is still positive after those four points.
+- **Captains aren't just the highest score.** The engine also looks at what the top 1,000 managers do, because captaining the same player as everyone else rarely moves your rank.
 
-## Our own brain, until it wasn't
+## It worked till it didn't
 
-The engine is the part that predicts. The chat is the part that talks. And the chat is where we made our boldest bet, and where we learned the most.
+The engine is the part that predicts. The chat is the part that talks. And the chat is where we made our boldest bet and learned the most.
 
-Until spring 2026, our chat used other people's models: GPT-3.5, then a GPT-4o agent with sixteen tools. It worked, but it sounded like generic ChatGPT advice, and every answer cost money.
+Until spring 2026, our chat ran on other people's models: GPT-3.5, then a GPT-4o agent with sixteen tools. It worked, but it sounded like generic ChatGPT advice, and every answer cost money.
 
 So DK fine-tuned our own. The base was Gemma 4 E4B, a small open model, trained on FPL data and on examples of how our tools should be called. It ran on **a Mac Mini M4 Pro in DK's home office**, which also served it to production. The marginal cost of a chat answer was electricity.
 
-It went through five generations over the summer. The last two learned to route: the model decides which tool to call (captain, transfers, squad changes and so on), our code runs that tool, and then the model writes the answer from the results. One generation went through fourteen named training runs in about four days, most of them overnight. On 2 August 2026, fplv4 went live. On 11 August, fplv5 added the ability to recover when a move fails, for example by freeing funds and then retrying.
+It went through five generations over the summer. The last two learned to route: the model decides which tool to call (captain, transfers, squad changes and so on), our code runs that tool, and then the model writes the answer from the results. One generation went through fourteen named training runs in about four days, mostly overnight. On 2 August 2026, fplv4 went live. On 11 August, fplv5 learned to recover when a move fails, for example by freeing up funds and then trying again.
 
-I was proud of it. And then, in my own words: **it worked till it didn't.**
+I was proud of it. And then, honestly, the fine-tuned model worked till it didn't.
 
-We had trained the model to handle FPL questions, and in doing that we made it very rigid. Throw it a follow-up, or a question with a small twist, and it did not know what to do. Sometimes it answered something irrelevant. We tried adding a narrator on top, GPT-4.1 mini, to write the final prose. The results were still not great.
+We'd trained it to handle FPL questions, and in the process we'd made it very deterministic. It knew exactly how to answer the questions it had been trained on, and not much else. Throw it a follow-up, or a question with a small twist, and it didn't know what to do, or it came back with something irrelevant. We tried putting a narrator on top, GPT-4.1 mini, to write the final answer. The results still weren't great.
 
-Then Jev arrived: a hosted classification model. DK saw straight away that this was our use case. We did not need a model that knew FPL. We needed one that could classify each turn well: the intent, which tool to call, whether it needs the conversation history, and whether it needs the user's team. We expose FPLGuru's data and tools to it, and it decides.
+Then Jev came out, a hosted classification model, and DK realised straight away that this was our use case. We didn't need a model that *knew* FPL. We needed one that could classify every turn really well: the intent, which tool to call, whether it needs the chat history, and whether it needs the user's team. Expose FPLGuru's data and tools to it, and it decides.
 
-We tested it properly before switching. On a frozen test set of 240 chat turns, our own model made the right decision in **155**. Jev made the right decision in **201**. For reference, Claude with the same tools got 212. Jev answered in a median of 0.27 seconds. Ours took 3.3 seconds.
+We tested it properly before switching. On a frozen set of 240 chat turns, our own model made the right call on **155**. Jev made the right call on **201**. For reference, Claude with the same tools got 212. Jev answered in a median of 0.27 seconds. Ours took 3.3.
 
 We kept the narrator and upgraded it to GPT-6 Luna. The chat experience improved dramatically.
 
-Did it hurt a little that our own small model did not make it? Yes. But our goal was always a better experience for users, not a model with our name on it. And the chat is still ours in the way that matters: FPLGuru's data and FPLGuru's engine power every answer. The model only picks the tool and writes the words.
+Obviously it hurt a little that our own small model didn't work out. But we learnt from it, and our primary goal was always a better experience for our users, not a model with our name on it. And in a way, the chat is still ours: FPLGuru's data and FPLGuru's engine power every single answer. The model only picks the tool and writes the words.
 
-The lesson I took from it: models and classifiers are getting better and cheaper every few months. For a small team, *not* running our own small model may be the right call for the long run. The hard-won parts, the engine, the data, the tools and the rule that code decides the facts, all carried over to the new setup unchanged.
+The lesson I took from it is about owning versus renting. LLMs and classification models keep getting better and cheaper every few months. For a team our size, maybe *not* running our own small model is the best thing in the long run. And the hard-won parts (the engine, the data, the tools, and the rule that code decides the facts) carried over to the new setup unchanged.
 
-## The engine versus my gut
+## The engine vs my gut
 
-Here is how it plays out with my own team.
+Here's how all of this plays out with my own team.
 
-In gameweek 1 of this season, FPLGuru recommended Dubravka and Kinsky as the goalkeepers. But Raya has been the best goalkeeper in the Premier League for three seasons. I could not overlook that. I paid more for Raya, and it paid off.
+In gameweek 1 of this season, FPLGuru recommended Dubravka and Kinsky as the go-to goalkeepers. But Raya has been the best goalkeeper in the Premier League for the last three seasons, and that was difficult to overlook. So I went for Raya, even though he was more expensive. It paid off.
 
-That is fine. AI tools work on stats, and stats sometimes miss part of the picture, especially at the start of a season when there is little data. But as the season goes on, the law of averages catches up.
+That's fine. AI tools work on stats at the end of the day, and stats sometimes don't show the complete picture, especially at the start of a season when there's barely any data. But as the season goes on, the law of averages catches up.
 
-And the engine has found players I would never have found myself. It suggested Slater from Hull City. It suggested Isak over Calvert-Lewin. Both have paid off better than the crowd favourites.
+And the engine has found players I would never have found myself. Slater from Hull City. Isak over Calvert-Lewin. Both have paid off better than the crowd favourites.
 
-The engine is not a better FPL player than me in every single decision. It is an objective one. It has no favourite club, no attachment to last season, and no fear of looking silly.
+The engine isn't a better FPL player than me in every single decision. It's an objective one. It has no favourite club, no attachment to last season, and no fear of looking silly in the group chat.
 
 ## The honest scoreboard
 
-So does any of this improve your rank? I do not know yet, and I am not going to pretend.
+So does any of this actually improve your rank? I don't know yet, and I'm not going to pretend I do.
 
-We have built the systems to find out. FPLGuru logs the suggestion it showed you for each decision, and a job scores it after the gameweek against what actually happened. Another job freezes Guru's own plan before each deadline, so we can compare it with what you did. As I write this, five gameweeks into the season, neither has scored a single week yet. The plumbing is done and the evidence is not.
+We've built the systems to find out. FPLGuru logs the suggestion it showed you for each decision, and a job scores it after the gameweek against what actually happened. Another job freezes Guru's own plan before every deadline, so we can compare it with what you did. As I write this, five gameweeks into the season, neither has scored a single week yet. The plumbing is done. The evidence isn't.
 
-There is also a public test. We registered a team on FPL called **FPL Guru XI**. Every week, it plays what FPLGuru suggests. It has been doing much better than my personal team. After gameweek 5, it has 329 points and sits around 1.99 million overall. Its best week so far was gameweek 2, with 104 points.
+There's also a public test. We registered a team on FPL called **FPL Guru XI**, and every week it plays exactly what FPLGuru suggests. It's been doing way better than my personal team. FPLGuru being unbiased helps it make the objective decisions I sometimes don't. After gameweek 5 it has 329 points and sits around 1.99 million overall. Its best week so far was gameweek 2, with 104 points.
 
-That is a long way from where I want it. Here is the bar I am setting, in public, so I cannot move it later: **if FPL Guru XI finishes the season in the top 100,000, we will know the engine works.**
+That's a long way from where I want it. So here's the bar, in public, so I can't quietly move it later: **if FPL Guru XI finishes the season in the top 100,000, we'll know the engine works.**
 
-Two years ago, FPLGuru's prediction was a rounded average with a floor of two. Today it is forty models, a decision layer that knows when to tell you to hold, and a chat that would rather call a tool than make something up. Ask me again in May.
+Two years ago, FPLGuru's prediction was a rounded average with a floor of two. Today it's forty models, a layer that knows when to tell you to hold, and a chat that would rather call a tool than make something up.
 
-The next post is about how two people shipped all of this so fast: what it is like when most of your commits are written by AI agents.
+Ask me again in May.
+
+*Next in Building FPLGuru: how two people shipped all of this so fast, and what it's like when most of your commits are written by AI agents.*
