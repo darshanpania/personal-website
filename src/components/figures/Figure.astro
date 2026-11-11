@@ -63,6 +63,9 @@ const postUrl = Astro.url.pathname.replace(/^\/newsletter\//, "/blog/");
   .fig figcaption { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-secondary); line-height: 1.5; margin-top: 0.8rem; }
   .fig img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); }
   .fig .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.8rem; }
+  .fig .shots { display: grid; gap: 1.2rem; }
+  .fig a.zoom { display: block; cursor: zoom-in; text-decoration: none; }
+  .prose-custom .fig .shots .lab,
   .prose-custom .fig .pair .lab { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-secondary); margin: 0.35rem 0 0; }
   .fig .legend { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 0.7rem; }
   .fig .legend i { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 2px; margin-right: 0.35em; }
@@ -80,8 +83,9 @@ const postUrl = Astro.url.pathname.replace(/^\/newsletter\//, "/blog/");
   .fig .hb .b { height: 100%; border-radius: 0 4px 4px 0; min-width: 2px; transform-origin: left; }
   .fig .hb .v { font-family: var(--font-mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
   /* stats */
-  .fig .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.9rem 1.2rem; }
-  .fig .stats div b { display: block; font-weight: 600; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .fig .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1rem; }
+  @media (min-width: 560px) { .fig .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .fig .stats div b { display: block; font-weight: 600; font-size: 1.6rem; white-space: nowrap; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
   .fig .stats div span { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.35; display: block; }
   /* chat mock */
   .fig .chat { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; line-height: 1.45; }
@@ -97,6 +101,10 @@ const postUrl = Astro.url.pathname.replace(/^\/newsletter\//, "/blog/");
   /* scroll-in animation */
   .fig.play .hb .b { animation: fig-growx 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
   @keyframes fig-growx { from { transform: scaleX(0); } }
+  dialog.fig-lightbox { margin: auto; padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 96vh; }
+  dialog.fig-lightbox::backdrop { background-color: rgba(0, 0, 0, 0.85); }
+  dialog.fig-lightbox img { display: block; max-width: 96vw; max-height: 92vh; width: auto; height: auto; border-radius: 6px; cursor: zoom-out; }
+  dialog.fig-lightbox p { margin: 0.4rem 0 0; text-align: center; font-family: var(--font-mono); font-size: 0.75rem; color: #e4e6e8; }
   #fig-tip { position: fixed; z-index: 50; pointer-events: none; background: var(--text-primary); color: var(--bg); font-family: var(--font-mono); font-size: 0.72rem; line-height: 1.4; padding: 0.3rem 0.5rem; border-radius: 5px; max-width: 16rem; white-space: pre-line; }
   @media (prefers-reduced-motion: reduce) {
     .fig *, .fig.play * { animation: none !important; }
@@ -124,6 +132,26 @@ const postUrl = Astro.url.pathname.replace(/^\/newsletter\//, "/blog/");
     }
   };
   document.addEventListener("astro:page-load", init);
+
+  // Screenshots open full size in a lightbox; the link is the no-JS fallback.
+  document.addEventListener("click", (e) => {
+    const link = (e.target as Element | null)?.closest?.(".fig a.zoom");
+    if (!(link instanceof HTMLAnchorElement)) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || typeof HTMLDialogElement !== "function") return;
+    e.preventDefault();
+    const dlg = document.createElement("dialog");
+    dlg.className = "fig-lightbox";
+    const img = document.createElement("img");
+    img.src = link.href;
+    img.alt = link.querySelector("img")?.alt ?? "";
+    const hint = document.createElement("p");
+    hint.textContent = "tap or press Esc to close";
+    dlg.append(img, hint);
+    dlg.addEventListener("click", () => dlg.close());
+    dlg.addEventListener("close", () => dlg.remove());
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  });
 
   let tip: HTMLElement | null = null;
   document.addEventListener("pointermove", (e) => {
