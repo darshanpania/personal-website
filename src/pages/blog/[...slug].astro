@@ -74,10 +74,23 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
         class="w-full aspect-video rounded-lg object-cover mb-8"
       />
     )}
+    {post.data.series && (
+      <p class="mb-3 font-mono text-xs uppercase tracking-[0.08em] text-(--mono-accent)">
+        {post.data.series}
+      </p>
+    )}
     <h1 class="text-xl md:text-[1.5625rem] font-medium text-(--text-primary) leading-tight">
       {post.data.title}
     </h1>
-    <p class="mt-3 font-mono text-sm text-(--text-secondary)">
+    {post.data.series && post.data.description && (
+      <p class="mt-3 text-[1.0625rem] leading-relaxed text-(--text-secondary) text-pretty">
+        {post.data.description}
+      </p>
+    )}
+    <p class:list={[
+      "mt-3 font-mono text-sm text-(--text-secondary)",
+      post.data.series && "pb-5 border-b border-(--border)",
+    ]}>
       {fmt(post.data.date)} · {readMinutes} min read
     </p>
 
@@ -335,19 +348,6 @@ const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encod
   .prose-custom img {
     max-width: 100%;
     height: auto;
-  }
-  .prose-custom .series {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--mono-accent);
-    letter-spacing: 0.04em;
-    margin-bottom: 0.5em;
-  }
-  .prose-custom .lead {
-    font-size: 1.12rem;
-    line-height: 1.55;
-    color: var(--text-secondary);
-    margin-top: 0;
   }
   .prose-custom .big {
     font-size: 1.4rem;
