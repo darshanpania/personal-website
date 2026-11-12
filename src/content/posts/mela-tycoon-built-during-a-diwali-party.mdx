@@ -1,0 +1,101 @@
+---
+title: "Mela Tycoon: The Game I Wanted as a Kid, Built While I Hosted a Diwali Party"
+date: 2026-11-12
+category: tech
+description: "I've wanted an Indian RollerCoaster Tycoon since I was a kid. I sent Claude one prompt before a Diwali party. By the end of the night, the whole game was done."
+coverImage: /images/posts/mela-tycoon-cover.jpg
+draft: false
+---
+
+As a kid, I was a huge fan of RollerCoaster Tycoon. And for about as long, I've wanted an Indian version of it. Not a theme park with a log flume. A mela. A giant wheel you can spot from the next village. A Maut Ka Kuan. A chaat stall with a longer queue than the rides.
+
+I never built it. A tycoon game is the kind of project that eats a small team for a year: 3D models, a crowd simulation, an economy, sound. It stayed on the someday list.
+
+Then, on the evening of 11 November, I typed one message and went to host a Diwali party.
+
+<video src="/images/posts/mela-tycoon-sunset.mp4" poster="/images/posts/mela-tycoon-sunset-poster.jpg" controls muted loop playsInline preload="metadata" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;"></video>
+
+## One prompt, sent before the guests arrived
+
+I was hosting a Diwali party for my cousins that night. Before it started, I opened Claude and sent this. I'm pasting it exactly as I typed it:
+
+> I want to build a roller coaster tycoon sort of a game but with Indian context of a mela. Start a Fable 5.2 thread on xHigh effort to ideate on the game, build the assets on blender available on this environment and open a new private repo and build the whole thing out. Go as deep as possible, we don't need code reviews and I just want a playable version. Make no mistakes. Don't ping me unless absolutely needed. Just let me know once the repo is created.
+
+That's the whole brief. No design document. No list of rides. No tech stack. I asked for Fable 5.2 on its highest effort setting, told it not to bother me, and went back to being a host.
+
+The only thing it needed from me was an empty GitHub repo, because it can't create one by itself. After that, silence.
+
+## What I came back to
+
+At the end of the night, I checked the status. It was done.
+
+Not a prototype with grey boxes. A complete game, with a title screen, a tutorial, six melas to play, saves, sound, and music.
+
+<img src="/images/posts/mela-tycoon-title.jpg" alt="The Mela Tycoon title screen: a lit mela at night with the game logo in Hindi and English" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+The commit history is my favourite part. The first commit landed at 6:34 PM. By 8:42 PM the game was playable and the README was written. In those two hours, it had:
+
+- Written Blender Python scripts for 62 3D models, and rendered the icons too. Nobody opened Blender. It ran headless on a cloud machine.
+- Built a simulation where every visitor is a person with a name, hunger, thirst, a budget, and opinions.
+- Made 12 rides, 4 shows, and 17 stalls, including a dragon coaster that you lay piece by piece.
+- Generated the sound effects and the music in code.
+- Written a bot that plays the game, and used it to check that every scenario can actually be won.
+- Added touch controls for phones, which I never asked for.
+
+About 10,000 lines of code, in one shot. I sat down expecting to find the catch: a ride that doesn't run, a menu that goes nowhere. I couldn't find a single bug. I was blown away, and honestly, I still am.
+
+## So what is the game?
+
+You are the organiser of a mela. You get an empty ground, some money, and a fixed number of days. You lay paths, build rides and stalls, hire staff, set prices, and try to keep a few hundred visitors fed, entertained, and not angry about the toilets.
+
+<img src="/images/posts/mela-tycoon-day.jpg" alt="A busy mela in the day: a giant wheel, a merry-go-round, a bouncy castle and rows of stalls" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+What got me was the detail. My prompt said "Indian context of a mela". It came back with:
+
+- A **Lakdi Ka Jhoola**, the wooden wheel that a man turns by hand. It needs no electricity, which matters, because there are power cuts.
+- **Maut Ka Kuan**, a jadugar, a kathputli show, and a Bhoot Bangla.
+- Chaat, bhutta, kulfi, gola, ganne ka ras, and buddhi ke baal.
+- A UPI point, for visitors who run out of cash.
+- Stray cows on the path, pickpockets, a visit from the Zila inspector, and a film star who pulls a crowd.
+- **Munshi ji**, your accountant, who tells you what is going wrong.
+
+Every ride has its own numbers, and you set the ticket price.
+
+<img src="/images/posts/mela-tycoon-ride.jpg" alt="The window of the Bada Jhoola, with its ticket price, excitement, queue and income" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+Every visitor has needs, money, and thoughts. Click one and she will tell you that the queue for Tora Tora is too long, or that Break Dance was paisa vasool.
+
+<img src="/images/posts/mela-tycoon-visitor.jpg" alt="The window of one visitor, with her needs, her money and her thoughts" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+And every evening at 6:30, the sun goes down and the bulbs come on. That was the moment the game won me over.
+
+<img src="/images/posts/mela-tycoon-night.jpg" alt="The same mela after sunset, with every ride and stall lit by bulbs" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+There are six melas, from a ten-day Gaon Ka Mela with ₹80,000 in your pocket to a thirty-day Maha Mela, plus a free-play ground called Khula Maidan. And yes, there is a roller coaster. It's a dragon.
+
+<img src="/images/posts/mela-tycoon-coaster.jpg" alt="The Toofan Dragon coaster, with its track builder window" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+## The game is not finished, on purpose
+
+This is the part I'm most excited about.
+
+There is a **Suggest an idea** button on the title screen and in the pause menu. Type what you think the mela is missing, and leave your email.
+
+<img src="/images/posts/mela-tycoon-idea.jpg" alt="The Suggest an idea form inside the game" style="width: 100%; margin: 2em auto; display: block; border-radius: 8px;" />
+
+Here's what happens next:
+
+1. Twice a day, at 8 AM and 8 PM IST, Claude reads the new ideas and sorts them.
+2. I go through the shortlist and approve the good ones.
+3. Claude builds each approved idea and ships it to the live game the same day.
+4. You get an email that says your idea is in the game.
+
+So the game you play this week will not be the game you play next week. If you think the mela needs a chai tapri or a nautanki stage, say so. If it's a good idea, you could be playing it by tonight.
+
+## What I keep thinking about
+
+I carried this idea around for most of my life and never started, because the gap between "I want this to exist" and "it exists" was too wide. That night, the gap was one paragraph and one party.
+
+I don't fully know what to do with that yet. For now, I'm going to go run a mela.
+
+**[Play Mela Tycoon](https://mela-tycoon.darshanpania.me/?utm_source=darshanpania.me&utm_medium=blog&utm_campaign=mela-tycoon-launch)**. It's free and it runs in your browser. It works on your phone too (turn it sideways), though a laptop is still the best seat. Build something, and then tell me what's missing.
