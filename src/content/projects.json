@@ -8,12 +8,20 @@
     "order": 1
   },
   {
+    "id": "melatycoon",
+    "name": "Mela Tycoon",
+    "platform": "web",
+    "description": "A tycoon game set in an Indian mela. Lay paths, build rides like the Lakdi Ka Jhoola and Maut Ka Kuan, run chaat stalls, and keep hundreds of visitors happy across six melas. Fable 5.2 built the whole thing in one shot from a single prompt: Blender-scripted 3D models, a crowd simulation, and generated sound, in Three.js and TypeScript. Players suggest ideas in the game, and approved ones ship the same day.",
+    "link": "https://mela-tycoon.darshanpania.me",
+    "order": 2
+  },
+  {
     "id": "howshitworks",
     "name": "How Shit Works",
     "platform": "web",
     "description": "An interactive guide to everyday electrical and mechanical appliances, shown from the inside in 3D. Each one is a short story: where the power comes in, what moves, and why it does the job. Built with three.js.",
     "link": "https://howshitworks.darshanpania.me",
-    "order": 2
+    "order": 3
   },
   {
     "id": "rainsurfer",
@@ -21,7 +29,7 @@
     "platform": "web",
     "description": "A web app that helps you rediscover articles you saved on Raindrop.io. Pick a collection, see a random article preview, then read it, mark it done, or skip to the next. OAuth 2.0 against the Raindrop API.",
     "link": "https://rainsurfer.darshanpania.me",
-    "order": 3
+    "order": 4
   },
   {
     "id": "raindrop-mcp",
@@ -29,7 +37,7 @@
     "platform": "web",
     "description": "An MCP server that exposes Raindrop.io bookmark management to LLM agents over HTTP/SSE. Built and presented at internal community events; now part of my personal and team workflows for AI-assisted knowledge management. Deployed to Railway with GitHub Actions CI/CD.",
     "link": "https://github.com/darshanpania/raindrop-io-mcp-server",
-    "order": 4
+    "order": 5
   },
   {
     "id": "notificity",
@@ -37,6 +45,6 @@
     "platform": "android",
     "description": "An Android app that captures and categorises every incoming push notification, with search by app or keyword. Built originally as a debugging tool during SDK development at CleverTap, then open-sourced as an architecture reference for the Android community. MVVM, Kotlin Coroutines and Flows, Jetpack Compose, Hilt, Robolectric, JUnit, Mockk. Six external contributors and counting.",
     "link": "https://github.com/darshanpania/Notificity",
-    "order": 5
+    "order": 6
   }
 ]
