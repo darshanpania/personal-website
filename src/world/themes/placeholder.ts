@@ -1,20 +1,27 @@
 import {
   BufferGeometry,
   Color,
+  DirectionalLight,
   Float32BufferAttribute,
+  HemisphereLight,
+  Mesh,
+  MeshStandardMaterial,
+  type Object3D,
   PerspectiveCamera,
   Points,
   Scene,
   ShaderMaterial,
   Vector3,
 } from "three";
+import { loadModel } from "../assets";
 import type { Stop } from "../stops";
 import type { ThemeFactory } from "../theme";
 
 /**
  * Test scene for the 3D pipeline: a slow field of dots in the colours of the
- * site. It proves the full chain (lazy load, one canvas across pages, a
- * camera stop for each page, dark mode, lite mode) before the real theme
+ * site, and a paper plane that Blender made (scripts/blender). It proves the
+ * full chain (lazy load, one canvas across pages, a camera stop for each
+ * page, dark mode, lite mode, Blender models) before the real theme
  * replaces it.
  */
 
@@ -99,7 +106,14 @@ export const createTheme: ThemeFactory = (ctx) => {
   geometry.setAttribute("position", new Float32BufferAttribute(positions, 3));
 
   const background = new Color();
-  const goal = { background: new Color(), ink: new Color(), accent: new Color(), opacity: 1 };
+  const goal = {
+    background: new Color(),
+    ink: new Color(),
+    accent: new Color(),
+    opacity: 1,
+    sky: 1,
+    sun: 1,
+  };
   const material = new ShaderMaterial({
     vertexShader,
     fragmentShader,
@@ -119,12 +133,40 @@ export const createTheme: ThemeFactory = (ctx) => {
   scene.add(dots);
   scene.background = background;
 
+  // Light for the model. The dots do not use it.
+  const sky = new HemisphereLight(0xffffff, 0xffffff, 1);
+  const sun = new DirectionalLight(0xffffff, 1);
+  sun.position.set(-4, 9, 6);
+  scene.add(sky, sun);
+
+  // The paper plane loads after the first frame. The scene works without it.
+  let plane: Object3D | null = null;
+  let planeAccent: MeshStandardMaterial | null = null;
+  let disposed = false;
+  loadModel("paper-plane")
+    .then((model) => {
+      if (disposed) return;
+      plane = model;
+      plane.traverse((child) => {
+        if (!(child instanceof Mesh)) return;
+        const mat = child.material;
+        if (mat instanceof MeshStandardMaterial && mat.name === "accent") planeAccent = mat;
+      });
+      tintPlane();
+      plane.scale.setScalar(0.8);
+      scene.add(plane);
+      ctx.invalidate();
+    })
+    .catch((error) => console.warn("[world] The test model did not load.", error));
+
   let coloursSettled = false;
   const readColours = (instant: boolean) => {
     goal.background.set(token("--bg"));
     goal.ink.set(token("--text-secondary"));
     goal.accent.set(token("--mono-accent"));
     goal.opacity = ctx.dark ? 0.5 : 0.42;
+    goal.sky = ctx.dark ? 1.5 : 2.6;
+    goal.sun = ctx.dark ? 1.3 : 1.6;
     coloursSettled = false;
     if (instant) blendColours(1);
   };
@@ -133,6 +175,16 @@ export const createTheme: ThemeFactory = (ctx) => {
     material.uniforms.uInk.value.lerp(goal.ink, k);
     material.uniforms.uAccent.value.lerp(goal.accent, k);
     material.uniforms.uOpacity.value += (goal.opacity - material.uniforms.uOpacity.value) * k;
+    // The underside of the plane takes the colour of the page.
+    sky.groundColor.copy(background);
+    sky.intensity += (goal.sky - sky.intensity) * k;
+    sun.intensity += (goal.sun - sun.intensity) * k;
+    tintPlane();
+  };
+  // The keel takes the accent of the site, softened, so text stays easy to
+  // read when the plane passes behind it.
+  const tintPlane = () => {
+    planeAccent?.color.copy(material.uniforms.uAccent.value).lerp(background, 0.35);
   };
 
   const position = new Vector3();
@@ -142,7 +194,12 @@ export const createTheme: ThemeFactory = (ctx) => {
   const sway = new Vector3();
   const goalSway = new Vector3();
   const lookNow = new Vector3();
+  const ahead = new Vector3();
   let colourClock = 0;
+
+  /** Where the plane is on its loop at angle `a` (radians). */
+  const flightPath = (a: number, out: Vector3) =>
+    out.set(2 + Math.cos(a) * 11, 4.2 + Math.sin(a * 2) * 0.5, -6 + Math.sin(a) * 5);
 
   const setScale = () => {
     const height = ctx.renderer.domElement.height;
@@ -194,6 +251,14 @@ export const createTheme: ThemeFactory = (ctx) => {
         material.uniforms.uTime.value = time;
       }
 
+      if (plane) {
+        // One slow loop over the field. With reduced motion the plane holds still.
+        const a = still ? 0.9 : time * 0.14;
+        flightPath(a, plane.position);
+        plane.lookAt(flightPath(a + 0.02, ahead));
+        plane.rotateZ(0.42 + Math.sin(a) * 0.12);
+      }
+
       camera.position.copy(position).add(sway);
       // Reading down a page lowers the view a little.
       camera.position.y -= scroll * 1.2;
@@ -215,6 +280,7 @@ export const createTheme: ThemeFactory = (ctx) => {
     },
 
     dispose() {
+      disposed = true;
       geometry.dispose();
       material.dispose();
     },

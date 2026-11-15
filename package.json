@@ -9,7 +9,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
-    "newsletter:draft": "node scripts/newsletter-draft.mjs"
+    "newsletter:draft": "node scripts/newsletter-draft.mjs",
+    "models": "blender -b --python scripts/blender/build.py --"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.0.0",

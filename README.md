@@ -43,6 +43,8 @@ src/
   content.config.ts           Astro content collection schemas (Zod)
   world/                      the 3D layer (three.js) — see "3D world" below
   styles/global.css           Tailwind import, light/dark CSS variables, prose styles, keyframes
+scripts/blender/              Python scripts that build the 3D models with Blender (`npm run models`)
+public/models/                the built models (.glb)
 docs/superpowers/specs/       design spec for the redesign
 .kalos.yaml                   design token + brand palette config (light + dark)
 ```
@@ -152,6 +154,8 @@ The site is being re-imagined in 3D. The typographic site stays as it is: every 
 - **Lite mode.** `decideMode` in `src/world/mode.ts` picks between `3d` and `lite` (the typographic site alone). No WebGL2 means lite. Reduced motion, data saver, or a low-memory device default to lite. The `3d: on / off` switch in the footer saves the visitor's choice in `localStorage.world`, and a saved choice wins over the defaults.
 - **Stops.** `stopFor` in `src/world/stops.ts` maps each URL to a place in the world (`home`, `blog`, `post`, `projects`, `resume`, `contact`, `other`).
 - **Themes.** A theme owns the scene and the camera (`WorldTheme` in `src/world/theme.ts`). The engine owns the renderer, the frame loop (it draws on demand and stops when nothing moves), and the bridge to the site: routes, dark mode, resize, scroll, pointer. `themes/placeholder.ts` is a test scene; the real theme replaces it.
+
+- **Models.** Blender makes the models from Python, with no hand-made `.blend` files. Each model is a module in `scripts/blender/models/` with a `build()` function. `npm run models` runs Blender headless and writes `public/models/<name>.glb` (meshopt-compressed); `loadModel(name)` in `src/world/assets.ts` loads one. The `.glb` files are committed, so the Vercel build does not need Blender. A material name is a contract: a theme finds a material by name to tint it with a site token (the test model has `paper` and `accent`).
 
 `html.world-on` is set once the first frame is on the canvas. Styles that only apply over the 3D world hang off that class.
 

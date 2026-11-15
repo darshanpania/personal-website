@@ -42,3 +42,7 @@ next-env.d.ts
 
 # newsletter dry-run output
 scripts/out/
+
+# python caches from the Blender model scripts
+__pycache__/
+*.pyc
