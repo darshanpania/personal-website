@@ -8,6 +8,7 @@ A typography-first personal site for [Darshan Pania](https://darshanpania.me). S
 - **[Tailwind CSS v4](https://tailwindcss.com/blog/tailwindcss-v4)** via `@tailwindcss/vite`, configured through CSS `@theme` and a small set of root CSS variables
 - **[MDX](https://mdxjs.com)** for local long-form posts
 - **Geist Sans + Geist Mono** via `@fontsource`
+- **[three.js](https://threejs.org)** for the 3D world, loaded on demand (see "3D world" below)
 - **TypeScript** end-to-end
 - **[Kalos](https://github.com/dk-marketplace/kalos)** governs the design tokens declared in `.kalos.yaml`
 - Deployed on **Vercel**
@@ -40,6 +41,7 @@ src/
     posts/*.mdx               local MDX posts rendered at /blog/<slug>
     projects.json             projects shown on /projects
   content.config.ts           Astro content collection schemas (Zod)
+  world/                      the 3D layer (three.js) — see "3D world" below
   styles/global.css           Tailwind import, light/dark CSS variables, prose styles, keyframes
 docs/superpowers/specs/       design spec for the redesign
 .kalos.yaml                   design token + brand palette config (light + dark)
@@ -140,6 +142,18 @@ flight. Those readers just sign up again.
 
 `/subscribed` renders four states — `confirmed`, `expired`, `invalid`,
 `error` — and anything unrecognised falls back to `invalid`.
+
+## 3D world (in progress)
+
+The site is being re-imagined in 3D. The typographic site stays as it is: every URL still renders real HTML, and that HTML is what a visitor sees first. The 3D world is an extra layer on top.
+
+- **One canvas for the whole site.** `src/components/World.astro` puts a fixed `<canvas id="world">` behind the page. `transition:persist` keeps the same canvas (and its WebGL context) alive through view transitions, so a page change is a camera move, not a reload.
+- **Text first.** `src/world/boot.ts` is tiny and ships with every page. It loads three.js and the scene (`src/world/engine.ts`, `src/world/themes/*`) only when the visitor gets the 3D world, and only after the browser is idle.
+- **Lite mode.** `decideMode` in `src/world/mode.ts` picks between `3d` and `lite` (the typographic site alone). No WebGL2 means lite. Reduced motion, data saver, or a low-memory device default to lite. The `3d: on / off` switch in the footer saves the visitor's choice in `localStorage.world`, and a saved choice wins over the defaults.
+- **Stops.** `stopFor` in `src/world/stops.ts` maps each URL to a place in the world (`home`, `blog`, `post`, `projects`, `resume`, `contact`, `other`).
+- **Themes.** A theme owns the scene and the camera (`WorldTheme` in `src/world/theme.ts`). The engine owns the renderer, the frame loop (it draws on demand and stops when nothing moves), and the bridge to the site: routes, dark mode, resize, scroll, pointer. `themes/placeholder.ts` is a test scene; the real theme replaces it.
+
+`html.world-on` is set once the first frame is on the canvas. Styles that only apply over the 3D world hang off that class.
 
 ## Design tokens
 

@@ -8,6 +8,16 @@ const year = new Date().getFullYear();
   >
     <span>© {year} darshan pania</span>
     <span class="flex items-center gap-4">
+      {/* Shown by src/world/boot.ts when the browser can draw the 3D world. */}
+      <button
+        id="world-toggle"
+        type="button"
+        aria-pressed="false"
+        hidden
+        class="cursor-pointer py-2 -my-2 hover:text-(--mono-accent) transition-colors"
+      >
+        3d: <span data-world-state>off</span>
+      </button>
       <a
         href="/rss.xml"
         class="hover:text-(--mono-accent) transition-colors"

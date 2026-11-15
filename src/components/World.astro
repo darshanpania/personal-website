@@ -1,0 +1,13 @@
+---
+/**
+ * The canvas of the 3D world. It sits behind the page and stays alive
+ * between pages: `transition:persist` keeps the same element (and its WebGL
+ * context) through view transitions. Styles are in global.css.
+ */
+---
+
+<canvas id="world" aria-hidden="true" transition:persist="world"></canvas>
+
+<script>
+  import "@/world/boot";
+</script>
