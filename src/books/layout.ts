@@ -17,6 +17,7 @@ export interface SpineInput {
   title?: string;
   subtitle?: string;
   publisher?: string;
+  image?: string;
 }
 
 export interface BookInput {
@@ -48,6 +49,8 @@ export interface Spine {
   title: string;
   subtitle: string;
   publisher: string;
+  /** Photo of the real spine, when there is one. */
+  image?: string;
 }
 
 export interface Book {
@@ -155,6 +158,7 @@ export function resolveBook(b: BookInput): Book {
       title: s.title ?? b.title,
       subtitle: s.subtitle ?? "",
       publisher: s.publisher ?? "",
+      image: s.image,
     },
   };
 }

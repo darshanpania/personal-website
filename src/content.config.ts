@@ -74,6 +74,8 @@ const books = defineCollection({
         title: z.string().optional(),
         subtitle: z.string().optional(),
         publisher: z.string().optional(),
+        // A straight-on photo of the real spine. It replaces the typeset one.
+        image: z.string().startsWith("/images/books/").optional(),
       })
       .default({}),
   }),

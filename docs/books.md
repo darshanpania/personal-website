@@ -48,6 +48,7 @@ colours gets a colour from a small palette; books of one series share it.
 | `spine.band`, `spine.bandFg`, `spine.bandText` | Colours and text of the band (`band` layout). |
 | `spine.title`, `spine.subtitle` | Text on the spine when it differs from `title`. |
 | `spine.publisher` | Small name at the foot of the spine. |
+| `spine.image` | Path under `/images/books/` to a straight-on photo of the real spine. It replaces the typeset spine. |
 
 Genres appear in the order of their first book in the file.
 

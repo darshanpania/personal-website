@@ -50,10 +50,10 @@ const genres = groupByGenre(books);
                 <li>
                   <button
                     type="button"
-                    class={`flat-spine flat-${b.spine.font}`}
+                    class={`flat-spine flat-${b.spine.font}${b.spine.image ? " flat-photo" : ""}`}
                     data-book-id={b.id}
                     aria-label={`${b.title} by ${b.author}`}
-                    style={`--t:${b.t};--h:${b.h};--bg:${b.spine.bg};--fg:${b.spine.fg};--accent:${b.spine.accent};--band:${b.spine.layout === "band" ? b.spine.band : b.spine.bg};--band-fg:${b.spine.layout === "band" ? b.spine.bandFg : b.spine.accent}`}
+                    style={`--t:${b.t};--h:${b.h};--bg:${b.spine.bg};--fg:${b.spine.fg};--accent:${b.spine.accent};--band:${b.spine.layout === "band" ? b.spine.band : b.spine.bg};--band-fg:${b.spine.layout === "band" ? b.spine.bandFg : b.spine.accent}${b.spine.image ? `;background-image:url(${b.spine.image})` : ""}`}
                   >
                     <span class="flat-band">{b.spine.layout === "band" ? b.spine.bandText : ""}</span>
                     <span class="flat-title">{b.spine.title}</span>
@@ -147,7 +147,7 @@ const genres = groupByGenre(books);
   .shelf-caption[data-open="true"] {
     opacity: 1;
     transform: none;
-    transition-delay: 450ms;
+    transition-delay: 750ms;
   }
   .shelf-caption[data-open="true"] .shelf-card {
     pointer-events: auto;
@@ -266,6 +266,12 @@ const genres = groupByGenre(books);
     font-weight: 400;
     text-transform: none;
     letter-spacing: 0.02em;
+  }
+  .flat-photo {
+    background-size: 100% 100%;
+  }
+  .flat-photo span {
+    visibility: hidden;
   }
   .flat-serif {
     font-family: "Libre Caslon Text", Georgia, serif;

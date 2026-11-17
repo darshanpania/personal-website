@@ -63,6 +63,8 @@ interface BookObject {
   hoverTarget: number;
   /** 0 on the shelf, 1 held up in front of the camera. */
   out: number;
+  /** How far the book can tip before its top corner meets the board above. */
+  maxLean: number;
 }
 
 export async function createShelf(
@@ -168,7 +170,7 @@ export async function createShelf(
     depthWrite: false,
   });
 
-  const spineTextures = new Map<string, THREE.CanvasTexture>();
+  const spineTextures = new Map<string, THREE.Texture>();
   const coverTextures = new Map<string, THREE.Texture>();
   const spineTexture = (book: Book) => {
     let t = spineTextures.get(book.id);
@@ -179,6 +181,19 @@ export async function createShelf(
       spineTextures.set(book.id, t);
     }
     return t;
+  };
+  /** A photo of the real spine replaces the typeset one as soon as it has loaded. */
+  const loadSpinePhoto = (book: Book, mat: THREE.MeshStandardMaterial) => {
+    if (!book.spine.image) return;
+    const photo = loader.load(book.spine.image, () => {
+      spineTextures.get(book.id)?.dispose();
+      spineTextures.set(book.id, photo);
+      mat.map = photo;
+      mat.needsUpdate = true;
+      invalidate();
+    });
+    photo.colorSpace = THREE.SRGBColorSpace;
+    photo.anisotropy = maxAniso;
   };
   const plainCover = (book: Book) => {
     const t = new THREE.CanvasTexture(drawPlainCover(book));
@@ -257,6 +272,8 @@ export async function createShelf(
       side: THREE.DoubleSide,
     });
 
+    loadSpinePhoto(book, spineMat);
+
     // Page block. The stripes run across the thickness on every visible edge.
     const pw = w - gap - over;
     const pg = new THREE.BoxGeometry(pw, h - over * 2, t - board * 2);
@@ -302,6 +319,7 @@ export async function createShelf(
       hover: 0,
       hoverTarget: 0,
       out: 0,
+      maxLean: 0.44,
     };
   };
 
@@ -398,6 +416,10 @@ export async function createShelf(
         const o = previous.get(placed.book.id) ?? makeBook(placed.book);
         const { w, h, t } = placed.book;
         o.home.set(left + (placed.x + t / 2) * MM, shelfTop + (h * MM) / 2, spineZ - (w * MM) / 2 + nudge(placed.book.id));
+        o.maxLean = 0.44;
+        while (o.maxLean > 0.05 && h * MM * Math.cos(o.maxLean) + w * MM * Math.sin(o.maxLean) > clear - 0.003) {
+          o.maxLean -= 0.01;
+        }
         objects.push(o);
         world.add(o.group);
       }
@@ -652,21 +674,36 @@ export async function createShelf(
   const tilt = new THREE.Vector2(0, 0);
   let lastDim = 0;
 
+  /**
+   * The way a hand takes a book: a finger hooks the top of the spine and tips
+   * it out, the book pivots on the bottom edge of its spine, then it slides off
+   * the shelf and comes up to the camera.
+   */
   const place = (o: BookObject) => {
     const g = o.group;
     const w = o.book.w * MM;
+    const h = o.book.h * MM;
     const p = o.out;
-    const pull = smooth(0, 0.42, p);
-    const fly = easeInOut(clamp((p - 0.18) / 0.82, 0, 1));
-    const z = o.home.z + o.hover * 0.02 + pull * (w + 0.03);
+    const tip = smooth(0, 0.26, p);
+    const pull = smooth(0.18, 0.55, p);
+    const fly = easeInOut(clamp((p - 0.42) / 0.58, 0, 1));
+    const lean = Math.min(o.maxLean, tip * 0.44 + o.hover * 0.13) * (1 - fly);
+
+    // Pivot: the bottom edge of the spine, where the book rests on the board.
+    const py = o.home.y - h / 2;
+    const pz = o.home.z + w / 2;
+    const c = Math.cos(lean);
+    const sn = Math.sin(lean);
+    const y = py + (h / 2) * c + (w / 2) * sn;
+    const z = pz + (h / 2) * sn - (w / 2) * c + o.hover * 0.004 + pull * (w + 0.03);
     g.position.set(
       THREE.MathUtils.lerp(o.home.x, target.pos.x, fly),
-      THREE.MathUtils.lerp(o.home.y, target.pos.y, fly),
+      THREE.MathUtils.lerp(y, target.pos.y, fly),
       THREE.MathUtils.lerp(z, target.pos.z, fly) + Math.sin(Math.PI * fly) * 0.04,
     );
     const open = o.book.id === selectedId ? 1 : 0;
     g.rotation.set(
-      (target.rotX + tilt.y * 0.16 * open) * fly,
+      lean + (target.rotX + tilt.y * 0.16 * open) * fly,
       THREE.MathUtils.lerp(Math.PI / 2, target.rotY + tilt.x * 0.3 * open, fly),
       0,
     );
@@ -694,7 +731,7 @@ export async function createShelf(
       else o.hover = o.hoverTarget;
       const goal = o.book.id === selectedId ? 1 : 0;
       if (o.out !== goal) {
-        const step = dt / (goal ? 1.05 : 0.8);
+        const step = dt / (goal ? 1.4 : 1.0);
         o.out = goal ? Math.min(1, o.out + step) : Math.max(0, o.out - step);
         active = true;
       }
