@@ -9,6 +9,7 @@
 - [Home](https://darshanpania.me/): Introduction and recent writing
 - [Writing](https://darshanpania.me/blog): All posts — tech, fiction, and non-fiction
 - [Projects](https://darshanpania.me/projects): Side projects across mobile and web
+- [Books](https://darshanpania.me/books): A bookshelf of the books I have read, sorted by genre
 - [Resume](https://darshanpania.me/resume): Work history, education, patents, and speaking
 - [Contact](https://darshanpania.me/contact): Email, calendar, and social links
 
