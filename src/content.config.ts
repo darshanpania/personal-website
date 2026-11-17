@@ -61,10 +61,12 @@ const books = defineCollection({
     width: z.number().positive().optional(),
     height: z.number().positive().optional(),
     note: z.string().optional(),
+    // My rating, in stars out of five.
+    rating: z.number().int().min(1).max(5).optional(),
     spine: z
       .object({
-        layout: z.enum(["classic", "band"]).optional(),
-        font: z.enum(["serif", "sans", "wide"]).optional(),
+        layout: z.enum(["classic", "band", "plain", "block", "label"]).optional(),
+        font: z.enum(["serif", "sans", "wide", "condensed", "display"]).optional(),
         bg: hex.optional(),
         fg: hex.optional(),
         accent: hex.optional(),

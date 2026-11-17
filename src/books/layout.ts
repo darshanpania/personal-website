@@ -2,8 +2,8 @@
 // All lengths are millimetres unless a name says otherwise.
 
 export type BookFormat = "hardcover" | "paperback" | "mass-market";
-export type SpineLayout = "classic" | "band";
-export type SpineFont = "serif" | "sans" | "wide";
+export type SpineLayout = "classic" | "band" | "plain" | "block" | "label";
+export type SpineFont = "serif" | "sans" | "wide" | "condensed" | "display";
 
 export interface SpineInput {
   layout?: SpineLayout;
@@ -34,6 +34,7 @@ export interface BookInput {
   width?: number;
   height?: number;
   note?: string;
+  rating?: number;
   spine?: SpineInput;
 }
 
@@ -65,6 +66,8 @@ export interface Book {
   format: BookFormat;
   cover?: string;
   note?: string;
+  /** Stars out of five. */
+  rating?: number;
   /** Cover width, cover height and spine thickness. */
   w: number;
   h: number;
@@ -125,12 +128,31 @@ export const thickness = (pages: number | undefined, format: BookFormat) => {
 
 const surname = (author: string) => author.trim().split(/\s+/).pop() ?? author;
 
+// Spine designs for books that do not name one. A publisher gives every book
+// of an author or a series the same design, so the choice hangs on that name.
+const DESIGNS: { layout: SpineLayout; font: SpineFont }[] = [
+  { layout: "plain", font: "sans" },
+  { layout: "plain", font: "serif" },
+  { layout: "plain", font: "condensed" },
+  { layout: "plain", font: "display" },
+  { layout: "band", font: "sans" },
+  { layout: "band", font: "condensed" },
+  { layout: "block", font: "sans" },
+  { layout: "block", font: "display" },
+  { layout: "label", font: "serif" },
+  { layout: "label", font: "condensed" },
+];
+
 export function resolveBook(b: BookInput): Book {
   const format = b.format ?? "paperback";
   const s = b.spine ?? {};
   const bg = s.bg ?? PALETTE[hash(b.series ?? b.id) % PALETTE.length];
   const fg = s.fg ?? inkOn(bg);
   const band = s.band ?? shade(bg, luminance(bg) > 0.35 ? -0.55 : -0.4);
+  const design =
+    format === "hardcover"
+      ? { layout: "classic" as const, font: "serif" as const }
+      : DESIGNS[hash(`design:${b.series ?? b.author}`) % DESIGNS.length];
   return {
     id: b.id,
     title: b.title,
@@ -143,12 +165,13 @@ export function resolveBook(b: BookInput): Book {
     format,
     cover: b.cover,
     note: b.note,
+    rating: b.rating,
     w: b.width ?? TRIM[format].w,
     h: b.height ?? TRIM[format].h,
     t: thickness(b.pages, format),
     spine: {
-      layout: s.layout ?? (format === "hardcover" ? "classic" : "band"),
-      font: s.font ?? (format === "hardcover" ? "serif" : "sans"),
+      layout: s.layout ?? design.layout,
+      font: s.font ?? design.font,
       bg,
       fg,
       accent: s.accent ?? fg,
@@ -201,76 +224,221 @@ export function groupByGenre(books: Book[]): Genre[] {
 
 export interface PlacedBook {
   book: Book;
-  /** Left edge of the spine, measured from the inner left wall of the case. */
+  /** Left edge of the spine, measured from the inner left wall of the cell. */
+  x: number;
+  /**
+   * Radians the book leans to the left, against the book before it. Only the
+   * last book of a cell leans. `x` is then where its bottom left corner rests.
+   */
+  lean: number;
+}
+
+export interface CellLabel {
+  genre: string;
+  /** Where the label starts, measured like a book's `x`. */
   x: number;
 }
 
-export interface Row {
-  genre: string;
-  /** True for the first shelf of a genre: that shelf carries the label. */
-  first: boolean;
+/** One compartment of the bookcase: one bay wide, one shelf high. */
+export interface Cell {
   books: PlacedBook[];
-  /** Right edge of the last book. */
+  /** One label for each genre that stands in the cell. */
+  labels: CellLabel[];
+  /** A steel plate stands at each of these places, between two genres or at the end. */
+  plates: number[];
+  /** Right edge of the last book, as it would be with every book upright. */
   end: number;
-  /** True when there is room for a bookend after the last book. */
-  bookend: boolean;
 }
 
 export const SHELF = {
-  padLeft: 5,
-  padRight: 5,
+  padLeft: 4,
+  padRight: 4,
+  /** Air between two books. */
   gap: 0.35,
-  bookend: 30,
+  /** Space for the plate that stands between two genres in one cell. */
+  divider: 26,
+  /** Width of a label holder on the front edge of a board. */
+  label: 112,
+  /** A genre that fills more than one cell leaves this share of each cell free. */
+  fill: 0.9,
 };
 
-/** Put each genre on its own shelves; a genre wraps when a shelf is full. */
-export function packShelves(genres: Genre[], innerWidth: number): Row[] {
-  const rows: Row[] = [];
-  const limit = innerWidth - SHELF.padRight;
+const runWidth = (books: Book[]) =>
+  books.reduce((sum, b) => sum + b.t, 0) + Math.max(0, books.length - 1) * SHELF.gap;
+
+/** Cut a list of books into `n` runs of about the same width. No run is wider than `limit`. */
+function split(books: Book[], n: number, limit: number): Book[][] {
+  const runs: Book[][] = [];
+  let rest = books;
+  for (let i = n; i > 1 && rest.length; i--) {
+    const target = Math.min(limit, runWidth(rest) / i);
+    let take = 1;
+    while (take < rest.length - (i - 1) && runWidth(rest.slice(0, take + 1)) <= target + rest[take].t / 2) take++;
+    while (take > 1 && runWidth(rest.slice(0, take)) > limit) take--;
+    runs.push(rest.slice(0, take));
+    rest = rest.slice(take);
+  }
+  if (rest.length) runs.push(rest);
+  return runs;
+}
+
+/**
+ * Put the genres into cells of `cellWidth`. A genre starts in the cell of the
+ * genre before it only when all of it fits there; a genre that is too long
+ * for one cell is shared out evenly over as many cells as it needs. The
+ * number of cells is a multiple of `bays`, so no cell of the case is empty.
+ */
+export function packCells(genres: Genre[], cellWidth: number, bays = 1): Cell[] {
+  const usable = cellWidth - SHELF.padLeft - SHELF.padRight;
+  // A group is one or more whole genres in one cell, or one genre over several cells.
+  type Group = { genres: Genre[]; cells: number; width: number };
+  const groups: Group[] = [];
   for (const g of genres) {
-    let row: Row = { genre: g.name, first: true, books: [], end: SHELF.padLeft, bookend: false };
-    rows.push(row);
-    for (const book of g.books) {
-      const x = row.books.length ? row.end + SHELF.gap : SHELF.padLeft;
-      if (row.books.length && x + book.t > limit) {
-        row = { genre: g.name, first: false, books: [], end: SHELF.padLeft, bookend: false };
-        rows.push(row);
-        row.books.push({ book, x: SHELF.padLeft });
-        row.end = SHELF.padLeft + book.t;
-      } else {
-        row.books.push({ book, x });
-        row.end = x + book.t;
-      }
+    if (!g.books.length) continue;
+    const width = runWidth(g.books);
+    const last = groups[groups.length - 1];
+    if (last && last.cells === 1 && last.width + SHELF.divider + width <= usable) {
+      last.genres.push(g);
+      last.width += SHELF.divider + width;
+      continue;
+    }
+    let cells = Math.max(1, Math.ceil(width / (usable * SHELF.fill)));
+    while (split(g.books, cells, usable).some((run) => runWidth(run) > usable)) cells++;
+    groups.push({ genres: [g], cells, width });
+  }
+
+  // Fill the last shelf: the fullest genre gets one more cell until the count fits.
+  const total = () => groups.reduce((n, g) => n + g.cells, 0);
+  while (groups.length && total() % bays !== 0) {
+    const alone = groups.filter((g) => g.genres.length === 1 && g.genres[0].books.length > g.cells);
+    if (!alone.length) break;
+    alone.sort((a, b) => b.width / b.cells - a.width / a.cells)[0].cells++;
+  }
+
+  const cells: Cell[] = [];
+  for (const group of groups) {
+    const runs: { genre: string; books: Book[] }[][] =
+      group.genres.length > 1 || group.cells === 1
+        ? [group.genres.map((g) => ({ genre: g.name, books: g.books }))]
+        : split(group.genres[0].books, group.cells, usable).map((books) => [
+            { genre: group.genres[0].name, books },
+          ]);
+    for (const parts of runs) {
+      const cell: Cell = { books: [], labels: [], plates: [], end: SHELF.padLeft };
+      parts.forEach((part, i) => {
+        let x = cell.end;
+        if (i > 0) {
+          cell.plates.push(x + 6);
+          x += SHELF.divider;
+        }
+        cell.labels.push({ genre: part.genre, x });
+        for (const book of part.books) {
+          cell.books.push({ book, x, lean: 0 });
+          x += book.t + SHELF.gap;
+        }
+        cell.end = x - SHELF.gap;
+      });
+      finish(cell, cellWidth);
+      cells.push(cell);
     }
   }
-  for (const r of rows) r.bookend = r.end + SHELF.bookend <= limit;
-  return rows;
+  while (cells.length % bays !== 0) cells.push({ books: [], labels: [], plates: [], end: SHELF.padLeft });
+
+  // Two labels in one cell must not overlap, and no label may run past the cell.
+  for (const cell of cells) {
+    let min = SHELF.padLeft;
+    for (const label of cell.labels) {
+      label.x = Math.max(min, Math.min(label.x, cellWidth - SHELF.padRight - SHELF.label));
+      min = label.x + SHELF.label + 6;
+    }
+  }
+  return cells;
+}
+
+/** The free end of a row: the last book leans on its neighbour, or a plate holds the row. */
+function finish(cell: Cell, cellWidth: number) {
+  const free = cellWidth - SHELF.padRight - cell.end;
+  const last = cell.books[cell.books.length - 1];
+  const before = cell.books[cell.books.length - 2];
+  if (!last || !before || free < 24) return;
+  const sameRun = cell.plates.every((p) => p < before.x);
+  // Thin and thick books slump; the choice is steady for a given book.
+  if (sameRun && last.book.t <= 34 && hash(`end:${last.book.id}`) % 3 !== 0) {
+    const reach = Math.min(free - 3, last.book.h * 0.2);
+    const lean = Math.asin(reach / last.book.h);
+    // The book touches its neighbour with its top corner, or the neighbour's top corner with its face.
+    const shift = Math.min(last.book.h * Math.sin(lean), before.book.h * Math.tan(lean));
+    last.lean = lean;
+    last.x = before.x + before.book.t + shift;
+  } else if (free >= 30) {
+    cell.plates.push(cell.end + 1.2);
+  }
+}
+
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+
+/**
+ * How the case is built for a stage of `cssW` CSS pixels: the number of bays,
+ * the inner width of one bay (mm) and the wall left free on each side (m).
+ * A phone gets one bay as wide as the screen allows; a wide window gets three.
+ */
+export function casePlan(cssW: number) {
+  const narrow = cssW < 940;
+  const marginSide = narrow ? 0.012 : 0.07;
+  const bays = cssW >= 1240 ? 3 : cssW >= 700 ? 2 : 1;
+  // Sides and uprights, the overhang of the top board, and the margins.
+  const walls = (bays + 1) * 0.022 + 0.018 + marginSide * 2;
+  const fit = Math.round(((cssW / 950 - walls) / bays) * 1000);
+  const cell = bays === 3 ? 400 : clamp(fit, bays === 2 ? 340 : 300, 440);
+  return { bays, cell, marginSide };
 }
 
 export interface CaseSize {
+  bays: number;
+  levels: number;
+  /** Inner width of one bay. */
+  cell: number;
   /** Clear height between two boards. */
   clear: number;
   board: number;
+  /** The top board is a little thicker and stands proud of the sides. */
+  top: number;
+  overhang: number;
   side: number;
+  /** The recessed base under the bottom board. */
+  plinth: number;
   depth: number;
-  inner: number;
+  /** Outer width over the sides, and height from the floor to the top of the top board. */
   outer: number;
   height: number;
 }
 
-export function caseSize(rows: Row[], innerWidth: number): CaseSize {
-  const tallest = Math.max(180, ...rows.flatMap((r) => r.books.map((p) => p.book.h)));
-  const deepest = Math.max(110, ...rows.flatMap((r) => r.books.map((p) => p.book.w)));
-  const clear = tallest + 42;
-  const board = 24;
-  const side = 20;
+export function caseSize(cells: Cell[], cellWidth: number, bays = 1): CaseSize {
+  const all = cells.flatMap((c) => c.books.map((p) => p.book));
+  const tallest = Math.max(180, ...all.map((b) => b.h));
+  const deepest = Math.max(110, ...all.map((b) => b.w));
+  const levels = Math.max(1, Math.ceil(cells.length / bays));
+  const clear = tallest + 38;
+  const board = 30;
+  const top = 34;
+  const side = 22;
+  const plinth = 76;
   return {
+    bays,
+    levels,
+    cell: cellWidth,
     clear,
     board,
+    top,
+    overhang: 9,
     side,
-    depth: deepest + 62,
-    inner: innerWidth,
-    outer: innerWidth + side * 2,
-    height: rows.length * clear + (rows.length + 1) * board,
+    plinth,
+    depth: deepest + 58,
+    outer: bays * cellWidth + (bays + 1) * side,
+    height: plinth + levels * (clear + board) + top,
   };
 }
+
+/** Height of the top face of the board under a level, measured from the floor. Level 0 is the top one. */
+export const shelfTop = (size: CaseSize, level: number) =>
+  size.plinth + size.board + (size.levels - 1 - level) * (size.clear + size.board);

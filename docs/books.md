@@ -1,8 +1,11 @@
 # Books shelf
 
-The page at `/books` draws the books in `src/content/books.json` on a 3D shelf.
-Each genre gets its own shelves. A click on a spine pulls the book out and
-shows its cover.
+The page at `/books` draws the books in `src/content/books.json` in a 3D
+bookcase that stands on a wood floor. The books are shelved by genre. A click
+on a spine pulls the book out and shows its cover.
+
+The case has three bays on a desktop, two on a tablet and one on a phone. It
+gets as many shelves as the books need, so it grows when you add books.
 
 ## Add a book
 
@@ -28,29 +31,35 @@ shows its cover.
    image URL or a local image file.
 
 A book without a cover gets a plain typographic cover. A book without spine
-colours gets a colour from a small palette; books of one series share it.
+colours gets a colour from a small palette; books of one series share it. A
+paperback without a `spine.layout` gets one of five designs; all the books of
+one author or series get the same design, as a publisher does.
 
 ## Fields
 
 | Field | Use |
 | --- | --- |
 | `id` | Unique. Also the name of the cover file. |
-| `title`, `author`, `genre` | Required. A new genre name makes a new shelf with its own brass label. |
+| `title`, `author`, `genre` | Required. A new genre name gets its own place in the case and its own label. |
 | `series`, `seriesIndex` | Books of a series stand together, in index order. |
 | `year`, `pages` | Shown next to the open book. `pages` also sets the spine thickness. |
 | `format` | `hardcover`, `paperback` (default) or `mass-market`. Sets the size and the build of the book. |
 | `width`, `height` | Trim size in millimetres, for an unusual book. |
 | `cover` | Path under `/images/books/`. |
 | `note` | A line or two of your own, shown next to the open book. |
-| `spine.layout` | `classic` (title down the spine, author at the foot) or `band` (author in a coloured band at the head). |
-| `spine.font` | `serif`, `sans` or `wide`. |
+| `rating` | Your stars, 1 to 5, shown next to the open book. |
+| `spine.layout` | `classic` (rules, title, author at the foot: the default for a hardcover), `plain` (title and author on the bare colour), `band` (author in a coloured band at the head), `block` (a coloured block at the foot) or `label` (the title on a coloured panel). |
+| `spine.font` | `serif`, `sans`, `wide`, `condensed` or `display`. |
 | `spine.bg`, `spine.fg`, `spine.accent` | Spine colour, title colour, colour of the smaller text. |
-| `spine.band`, `spine.bandFg`, `spine.bandText` | Colours and text of the band (`band` layout). |
+| `spine.band`, `spine.bandFg`, `spine.bandText` | Second colour and its text colour (`band`, `block` and `label` layouts); `bandText` is the text in the band. |
 | `spine.title`, `spine.subtitle` | Text on the spine when it differs from `title`. |
 | `spine.publisher` | Small name at the foot of the spine. |
 | `spine.image` | Path under `/images/books/` to a straight-on photo of the real spine. It replaces the typeset spine. |
 
-Genres appear in the order of their first book in the file.
+Genres appear in the order of their first book in the file. A genre starts in
+a new compartment unless all of it fits beside the genre before it. A long
+genre is shared out evenly over two or more compartments. Each compartment
+has a label for each genre in it.
 
 ## How it is built
 
@@ -65,4 +74,16 @@ The flat shelf is used when there is no WebGL 2, when the visitor asks for
 reduced motion or data saving, and on devices with little memory. The link
 under the shelf switches between the two; `?shelf=3d` or `?shelf=flat` forces one.
 
-Wood textures: "Walnut Veneer" from Poly Haven (CC0).
+The canvas is see-through: the page is the wall. The stage is as wide as the
+window, so the floor runs from one side of the page to the other and fades
+into the page at the bottom.
+
+## Link preview
+
+`public/og/books.jpg` (1200 x 630) and `public/og/books.mp4` are the image and
+the short video that a link to `/books` shows. They are pictures of the real
+page, taken with a headless browser at `/books/?shelf=3d&quality=high`. Make
+them again when the shelf changes a lot. The video is extra: most apps show
+only the image.
+
+Wood textures: "Walnut Veneer" (case) and "Wood Floor" (floor) from Poly Haven (CC0).

@@ -72,6 +72,9 @@ function fill(el: HTMLElement, b: Book) {
   set("genre", b.genre);
   set("meta", meta(b));
   set("note", b.note ?? "");
+  const stars = b.rating ? "★".repeat(b.rating) + "☆".repeat(5 - b.rating) : "";
+  set("rating", stars);
+  el.querySelector('[data-book="rating"]')?.setAttribute("aria-label", b.rating ? `My rating: ${b.rating} of 5` : "");
 }
 
 function init() {
@@ -100,6 +103,21 @@ function init() {
     el.addEventListener(type, fn);
     off.push(() => el.removeEventListener(type, fn));
   };
+
+  // The stage is as wide as the window, not the text column: the floor runs
+  // from one side of the page to the other.
+  const STAGE_MAX = 1680;
+  const bleed = () => {
+    const vw = document.documentElement.clientWidth;
+    const w = Math.min(vw, STAGE_MAX);
+    const left = root.getBoundingClientRect().left;
+    stage.style.width = `${w}px`;
+    stage.style.marginLeft = `${(vw - w) / 2 - left}px`;
+    stage.dataset.capped = String(w < vw);
+  };
+  bleed();
+  window.addEventListener("resize", bleed);
+  off.push(() => window.removeEventListener("resize", bleed));
 
   const showToggle = () => {
     toggle.hidden = !device.webgl2;
@@ -141,6 +159,7 @@ function init() {
         onSelect,
         onDim: (amount) => {
           backdrop.style.opacity = String(amount * DIM);
+          root.style.setProperty("--dim", String(amount * DIM));
           root.dataset.open = amount > 0.001 ? "true" : "false";
         },
       });
@@ -162,6 +181,7 @@ function init() {
     delete window.__shelf;
     caption.dataset.open = "false";
     backdrop.style.opacity = "0";
+    root.style.setProperty("--dim", "0");
     root.dataset.open = "false";
   };
 
