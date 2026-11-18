@@ -1745,9 +1745,17 @@
     "year": 1954,
     "pages": 388,
     "rating": 5,
+    "cover": "/images/books/ponniyin-selvan-the-storm.webp",
+    "width": 139,
+    "height": 198,
     "spine": {
       "title": "Ponniyin Selvan",
       "subtitle": "The Storm",
+      "bg": "#212124",
+      "fg": "#ebeac0",
+      "accent": "#dfac4c",
+      "band": "#585958",
+      "bandFg": "#f1e7d0",
       "publisher": "Macmillan"
     }
   },
@@ -1761,9 +1769,17 @@
     "year": 1950,
     "pages": 387,
     "rating": 5,
+    "cover": "/images/books/ponniyin-selvan-the-sword.webp",
+    "width": 132,
+    "height": 198,
     "spine": {
       "title": "Ponniyin Selvan",
       "subtitle": "The Sword",
+      "bg": "#3d3a45",
+      "fg": "#cac6c4",
+      "accent": "#e6aa4a",
+      "band": "#080505",
+      "bandFg": "#f1e7d0",
       "publisher": "Macmillan"
     }
   },
@@ -1777,9 +1793,17 @@
     "year": 1954,
     "pages": 314,
     "rating": 5,
+    "cover": "/images/books/ponniyin-selvan-the-crown.webp",
+    "width": 135,
+    "height": 198,
     "spine": {
       "title": "Ponniyin Selvan",
       "subtitle": "The Crown",
+      "bg": "#21201e",
+      "fg": "#f1e5bc",
+      "accent": "#e5b854",
+      "band": "#544f37",
+      "bandFg": "#f1e7d0",
       "publisher": "Macmillan"
     }
   },
@@ -1793,9 +1817,17 @@
     "year": 1954,
     "pages": 803,
     "rating": 5,
+    "cover": "/images/books/ponniyin-selvan-epitome-of-sacrifice.webp",
+    "width": 132,
+    "height": 198,
     "spine": {
       "title": "Ponniyin Selvan",
       "subtitle": "Epitome of Sacrifice",
+      "bg": "#332018",
+      "fg": "#efeecf",
+      "accent": "#fa9250",
+      "band": "#fa9250",
+      "bandFg": "#332018",
       "publisher": "Macmillan"
     }
   },
@@ -2185,13 +2217,6 @@
     }
   },
   {
-    "id": "unmasked",
-    "title": "Unmasked",
-    "author": "PepperScript",
-    "genre": "Non-Fiction",
-    "isbn": "9789384411305"
-  },
-  {
     "id": "the-art-of-war",
     "title": "The Art of War",
     "author": "Sun Tzu",
@@ -2332,8 +2357,16 @@
     "year": 2014,
     "pages": 39,
     "rating": 3,
-    "width": 126,
-    "height": 190
+    "cover": "/images/books/understanding-rumi.webp",
+    "width": 140,
+    "height": 190,
+    "spine": {
+      "bg": "#8fb3b7",
+      "fg": "#3b3931",
+      "accent": "#3b3931",
+      "band": "#747154",
+      "bandFg": "#f1e7d0"
+    }
   },
   {
     "id": "salt",
