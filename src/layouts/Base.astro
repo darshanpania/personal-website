@@ -9,6 +9,9 @@ interface Props {
   description?: string;
   ogType?: "website" | "article";
   ogImage?: string;
+  ogImageAlt?: string;
+  /** A short MP4 for link previews that play video. Same size as the image. */
+  ogVideo?: string;
   publishedTime?: Date;
   jsonLd?: string;
 }
@@ -18,6 +21,8 @@ const {
   description = "Senior Director of Engineering at CleverTap. Mobile SDKs, engineering teams, and the occasional side project.",
   ogType = "website",
   ogImage,
+  ogImageAlt,
+  ogVideo,
   publishedTime,
   jsonLd,
 } = Astro.props;
@@ -25,6 +30,7 @@ const {
 const siteBase = Astro.site ?? new URL("https://darshanpania.me");
 const canonical = new URL(Astro.url.pathname, siteBase).href;
 const ogImageAbsolute = new URL(ogImage ?? "/images/Darshan_Pic.jpg", siteBase).href;
+const ogVideoAbsolute = ogVideo ? new URL(ogVideo, siteBase).href : undefined;
 
 const posthogKey = import.meta.env.PUBLIC_POSTHOG_KEY?.trim();
 const rawPosthogHost = import.meta.env.PUBLIC_POSTHOG_HOST?.trim();
@@ -51,6 +57,16 @@ const posthogEnabled = import.meta.env.PROD && !!posthogKey;
     <meta property="og:image" content={ogImageAbsolute} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {ogImageAlt && <meta property="og:image:alt" content={ogImageAlt} />}
+    {ogVideoAbsolute && (
+      <>
+        <meta property="og:video" content={ogVideoAbsolute} />
+        <meta property="og:video:secure_url" content={ogVideoAbsolute} />
+        <meta property="og:video:type" content="video/mp4" />
+        <meta property="og:video:width" content="1200" />
+        <meta property="og:video:height" content="630" />
+      </>
+    )}
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Darshan Pania" />
     {publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
@@ -59,6 +75,7 @@ const posthogEnabled = import.meta.env.PROD && !!posthogKey;
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageAbsolute} />
+    {ogImageAlt && <meta name="twitter:image:alt" content={ogImageAlt} />}
     <meta name="twitter:creator" content="@i_m_Pania" />
     {jsonLd && <script type="application/ld+json" set:html={jsonLd.replace(/</g, "\\u003c")} />}
     <title>{title}</title>

@@ -40,4 +40,47 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { blog, posts, projects };
+// Books I've read, shown on the 3D shelf at /books. Only title, author and
+// genre are required; see docs/books.md for the optional fields.
+const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+const books = defineCollection({
+  loader: file("./src/content/books.json"),
+  schema: z.object({
+    id: z.string(),
+    title: z.string(),
+    author: z.string(),
+    genre: z.string(),
+    series: z.string().optional(),
+    seriesIndex: z.number().optional(),
+    year: z.number().int().optional(),
+    pages: z.number().int().positive().optional(),
+    format: z.enum(["hardcover", "paperback", "mass-market"]).default("paperback"),
+    isbn: z.string().optional(),
+    cover: z.string().startsWith("/images/books/").optional(),
+    // Overrides in millimetres for books with an unusual trim size.
+    width: z.number().positive().optional(),
+    height: z.number().positive().optional(),
+    note: z.string().optional(),
+    // My rating, in stars out of five.
+    rating: z.number().int().min(1).max(5).optional(),
+    spine: z
+      .object({
+        layout: z.enum(["classic", "band", "plain", "block", "label"]).optional(),
+        font: z.enum(["serif", "sans", "wide", "condensed", "display"]).optional(),
+        bg: hex.optional(),
+        fg: hex.optional(),
+        accent: hex.optional(),
+        band: hex.optional(),
+        bandFg: hex.optional(),
+        bandText: z.string().optional(),
+        title: z.string().optional(),
+        subtitle: z.string().optional(),
+        publisher: z.string().optional(),
+        // A straight-on photo of the real spine. It replaces the typeset one.
+        image: z.string().startsWith("/images/books/").optional(),
+      })
+      .default({}),
+  }),
+});
+
+export const collections = { blog, posts, projects, books };

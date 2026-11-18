@@ -1,0 +1,382 @@
+---
+import "@fontsource/libre-caslon-text/latin-400.css";
+import "@fontsource/libre-caslon-text/latin-400-italic.css";
+import "@fontsource/libre-caslon-text/latin-700.css";
+import "@fontsource/michroma/latin-400.css";
+import "@fontsource/oswald/latin-500.css";
+import "@fontsource/playfair-display/latin-700.css";
+import Base from "@/layouts/Base.astro";
+import { getCollection } from "astro:content";
+import { groupByGenre, resolveBook } from "@/books/layout";
+
+const books = (await getCollection("books")).map((entry) => resolveBook(entry.data));
+const genres = groupByGenre(books);
+---
+
+<Base
+  title="books — Darshan Pania"
+  description={`A bookcase with the ${books.length} books I have read, shelved by genre. Take one out to see its cover.`}
+  ogImage="/og/books.jpg"
+  ogImageAlt="A wooden bookcase on a wood floor, full of books shelved by genre."
+  ogVideo="/og/books.mp4"
+>
+  <h1 class="font-mono text-xl md:text-[1.5625rem] font-medium text-(--text-primary)">
+    books
+  </h1>
+  <p class="mt-4 text-(--text-secondary) text-sm leading-6">
+    Books I have read, shelved by genre. Pick one to see its cover.
+  </p>
+
+  <div id="bookshelf" class="mt-5" data-books={JSON.stringify(books)} data-mode="flat">
+    <div data-shelf-backdrop class="shelf-backdrop"></div>
+    <div data-shelf-stage class="shelf-stage" hidden>
+      <canvas aria-hidden="true"></canvas>
+      <div data-shelf-caption data-open="false" class="shelf-caption" aria-live="polite">
+        <div class="shelf-card">
+          <p data-book="genre" class="font-mono text-xs text-(--mono-accent)"></p>
+          <h2 data-book="title" class="mt-2 text-(--text-primary) text-base md:text-lg font-medium leading-snug"></h2>
+          <p data-book="author" class="mt-1 text-(--text-secondary) text-sm"></p>
+          <p data-book="meta" class="mt-3 font-mono text-xs text-(--text-secondary)"></p>
+          <p data-book="rating" class="mt-2 text-sm tracking-widest text-(--mono-accent)" hidden></p>
+          <p data-book="note" class="mt-3 text-(--text-secondary) text-sm leading-6" hidden></p>
+          <button type="button" data-shelf-close class="mt-4 font-mono text-xs text-(--mono-accent) hover:underline underline-offset-4">
+            <span aria-hidden="true" class="icon-back">←</span> put it back
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div data-shelf-flat class="shelf-flat">
+      {
+        genres.map((g) => (
+          <section class="mt-8 first:mt-0" aria-label={g.name}>
+            <h2 class="font-mono text-xs text-(--text-secondary) mb-3">{g.name.toLowerCase()}</h2>
+            <ul class="flat-row">
+              {g.books.map((b) => (
+                <li>
+                  <button
+                    type="button"
+                    class={`flat-spine flat-${b.spine.font}${b.spine.image ? " flat-photo" : ""}`}
+                    data-book-id={b.id}
+                    aria-label={`${b.title} by ${b.author}`}
+                    style={`--t:${b.t};--h:${b.h};--bg:${b.spine.bg};--fg:${b.spine.fg};--accent:${b.spine.accent};--band:${b.spine.layout === "band" ? b.spine.band : b.spine.bg};--band-fg:${b.spine.layout === "band" ? b.spine.bandFg : b.spine.accent}${b.spine.image ? `;background-image:url(${b.spine.image})` : ""}`}
+                  >
+                    <span class="flat-band">{b.spine.layout === "band" ? b.spine.bandText : ""}</span>
+                    <span class="flat-title">{b.spine.title}</span>
+                    {b.spine.subtitle && <span class="flat-sub">{b.spine.subtitle}</span>}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="mt-6 font-mono text-xs text-(--text-secondary)">
+      <button type="button" data-shelf-toggle class="hover:text-(--mono-accent) transition-colors" hidden></button>
+    </p>
+
+    <dialog data-shelf-dialog class="shelf-dialog">
+      <div class="shelf-dialog-body">
+        <img data-book="cover" alt="" width="280" height="440" decoding="async" />
+        <div data-book="plain" class="shelf-plain" hidden></div>
+        <div>
+          <p data-book="genre" class="font-mono text-xs text-(--mono-accent)"></p>
+          <h2 data-book="title" class="mt-2 text-(--text-primary) text-lg font-medium leading-snug"></h2>
+          <p data-book="author" class="mt-1 text-(--text-secondary) text-sm"></p>
+          <p data-book="meta" class="mt-3 font-mono text-xs text-(--text-secondary)"></p>
+          <p data-book="rating" class="mt-2 text-sm tracking-widest text-(--mono-accent)" hidden></p>
+          <p data-book="note" class="mt-3 text-(--text-secondary) text-sm leading-6" hidden></p>
+          <button type="button" data-shelf-close class="mt-4 font-mono text-xs text-(--mono-accent) hover:underline underline-offset-4">
+            <span aria-hidden="true" class="icon-back">←</span> put it back
+          </button>
+        </div>
+      </div>
+    </dialog>
+  </div>
+</Base>
+
+<script>
+  import "@/books/main";
+</script>
+
+<style is:global>
+  /* ---- 3D stage ---- */
+  .shelf-stage {
+    position: relative;
+    min-height: 320px;
+    /* The caption keeps its last place while it is closed; it must not widen the page. */
+    overflow: hidden;
+  }
+  /* The floor fades into the page at the foot of the stage, and at the sides
+     when the stage is narrower than a very wide window. The page dims behind
+     an open book, so the fade dims with it. */
+  .shelf-stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    --fade: color-mix(in srgb, #000 calc(var(--dim, 0) * 100%), var(--bg));
+    background: linear-gradient(to top, var(--fade), transparent 64px);
+  }
+  .shelf-stage[data-capped="true"]::after {
+    background:
+      linear-gradient(to top, var(--fade), transparent 64px),
+      linear-gradient(to right, var(--fade), transparent 7%, transparent 93%, var(--fade));
+  }
+  .shelf-caption {
+    z-index: 1;
+  }
+  /* While a book is held up the page dims behind the stage, like a lightbox. */
+  .shelf-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #bookshelf[data-open="true"] .shelf-backdrop {
+    pointer-events: auto;
+  }
+  #bookshelf[data-open="true"] .shelf-stage {
+    z-index: 70;
+  }
+  .shelf-stage canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: pan-y;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #bookshelf[data-loading] .shelf-stage canvas {
+    opacity: 0;
+  }
+  .shelf-stage canvas {
+    transition: opacity 400ms ease-out;
+  }
+  .shelf-caption {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 200ms ease-out,
+      transform 200ms ease-out;
+  }
+  .shelf-caption[data-mode="stack"] {
+    align-items: flex-end;
+  }
+  .shelf-caption[data-open="true"] {
+    opacity: 1;
+    transform: none;
+    transition-delay: 750ms;
+  }
+  .shelf-caption[data-open="true"] .shelf-card {
+    pointer-events: auto;
+  }
+  .shelf-card {
+    width: 100%;
+    max-height: 100%;
+    overflow: auto;
+    padding: 1rem 1.125rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(6px);
+  }
+  .shelf-caption[data-mode="stack"] .shelf-card {
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* In 3D mode the flat shelf stays for keyboards and screen readers only. */
+  #bookshelf[data-mode="3d"] .shelf-flat {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ---- flat shelf ---- */
+  #bookshelf {
+    --u: min(1.12px, calc((100vw - 3rem) / 300));
+    --board: 11px;
+  }
+  .flat-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0 1px;
+    padding: 0 8px;
+    border-radius: 2px;
+    /* One board under every line of books, however many lines there are. */
+    background:
+      linear-gradient(to bottom, transparent calc(100% - var(--board)), #6f4a33 0, #8b6146 35%, #7a543b 100%),
+      linear-gradient(to bottom, color-mix(in srgb, var(--surface) 70%, transparent), var(--surface));
+    background-size: 100% calc(246 * var(--u) + var(--board));
+  }
+  .flat-row li {
+    display: flex;
+    align-items: flex-end;
+    height: calc(246 * var(--u) + var(--board));
+    padding-bottom: var(--board);
+  }
+  .flat-spine {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: calc(var(--t) * var(--u));
+    height: calc(var(--h) * var(--u));
+    overflow: hidden;
+    border-radius: 1.5px;
+    color: var(--fg);
+    background:
+      linear-gradient(to right, rgb(0 0 0 / 0.28), transparent 18%, rgb(255 255 255 / 0.1) 45%, transparent 75%, rgb(0 0 0 / 0.3)),
+      var(--bg);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    cursor: pointer;
+    font-size: min(calc(var(--t) * var(--u) * 0.44), 13px);
+    line-height: 1;
+    transform-origin: bottom;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .flat-spine {
+      transition: transform 180ms ease-out;
+    }
+    @media (hover: hover) {
+      .flat-spine:hover {
+        transform: translateY(-6px);
+      }
+    }
+  }
+  .flat-spine span {
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .flat-band {
+    flex: none;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.7em 0;
+    background: var(--band);
+    color: var(--band-fg);
+  }
+  .flat-band:empty {
+    padding: 0.5em 0;
+  }
+  .flat-title {
+    flex: none;
+    max-height: 100%;
+    padding-top: 0.7em;
+    overflow: hidden;
+    font-size: 0.8em;
+  }
+  .flat-spine .flat-sub {
+    flex: 1;
+    min-height: 0;
+    padding-top: 0.5em;
+    overflow: hidden;
+    color: var(--accent);
+    font-size: 0.6em;
+    font-style: italic;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .flat-photo {
+    background-size: 100% 100%;
+  }
+  .flat-photo span {
+    visibility: hidden;
+  }
+  .flat-serif {
+    font-family: "Libre Caslon Text", Georgia, serif;
+    font-weight: 700;
+  }
+  .flat-sans {
+    font-weight: 600;
+  }
+  .flat-wide {
+    font-family: "Michroma", var(--font-sans);
+    font-size: min(calc(var(--t) * var(--u) * 0.36), 11px);
+  }
+  .flat-wide .flat-title {
+    font-size: 0.66em;
+  }
+  .flat-condensed {
+    font-family: "Oswald", var(--font-sans);
+    font-weight: 500;
+  }
+  .flat-display {
+    font-family: "Playfair Display", Georgia, serif;
+    font-weight: 700;
+  }
+  .flat-display span {
+    text-transform: none;
+    letter-spacing: 0.01em;
+  }
+
+  .shelf-dialog {
+    margin: auto;
+    padding: 0;
+    max-width: min(34rem, calc(100vw - 2rem));
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+  .shelf-dialog::backdrop {
+    background: rgb(0 0 0 / 0.55);
+  }
+  .shelf-dialog-body {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+  .shelf-dialog-body > div:last-child {
+    flex: 1 1 12rem;
+  }
+  .shelf-dialog img,
+  .shelf-plain {
+    width: min(210px, 52vw);
+    height: auto;
+    border-radius: 2px 5px 5px 2px;
+    box-shadow:
+      0 14px 30px rgb(0 0 0 / 0.3),
+      inset 3px 0 4px rgb(0 0 0 / 0.25);
+  }
+  .shelf-plain {
+    aspect-ratio: 2 / 3;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    text-align: center;
+    font-family: "Libre Caslon Text", Georgia, serif;
+    font-weight: 700;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .shelf-dialog[open] img,
+    .shelf-dialog[open] .shelf-plain {
+      animation: shelf-cover-in 380ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+  }
+  @keyframes shelf-cover-in {
+    from {
+      opacity: 0;
+      transform: perspective(700px) translateY(14px) rotateY(-55deg) scale(0.82);
+    }
+  }
+</style>

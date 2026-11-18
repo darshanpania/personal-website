@@ -10,6 +10,7 @@ const isActive = (href: string) => {
 const links = [
   { href: "/blog", label: "blog" },
   { href: "/projects", label: "projects" },
+  { href: "/books", label: "books" },
   { href: "/resume", label: "resume" },
   { href: "/contact", label: "contact" },
 ];
@@ -19,14 +20,14 @@ const links = [
   id="site-header"
   class="sticky top-0 z-50 border-b border-transparent bg-(--bg)/80 backdrop-blur supports-[backdrop-filter]:bg-(--bg)/70 transition-[border-color] duration-200"
 >
-  <div class="mx-auto max-w-[640px] px-4 py-3 flex items-center justify-between gap-4">
+  <div class="mx-auto max-w-[640px] px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
     <a
       href="/"
-      class="font-mono text-sm text-(--mono-accent) tracking-tight py-2 -my-2"
+      class="font-mono text-sm text-(--mono-accent) tracking-tight whitespace-nowrap py-2 -my-2"
     >
       darshan pania
     </a>
-    <nav aria-label="Main" class="flex items-center gap-5 text-sm">
+    <nav aria-label="Main" class="flex items-center gap-3.5 text-[13px] sm:gap-5 sm:text-sm">
       {
         links.map(({ href, label }) => (
           <a
