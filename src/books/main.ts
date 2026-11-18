@@ -51,6 +51,20 @@ function facts(): DeviceFacts {
   };
 }
 
+// PostHog is loaded only in production by Base.astro. In dev, and for
+// visitors who block it, window.posthog is undefined and nothing is sent.
+function track(event: string, props: Record<string, unknown>) {
+  (window as unknown as { posthog?: { capture?: (e: string, p: unknown) => void } }).posthog?.capture?.(event, props);
+}
+
+const bookProps = (b: Book) => ({
+  book_id: b.id,
+  title: b.title,
+  author: b.author,
+  genre: b.genre,
+  series: b.series ?? null,
+});
+
 const meta = (b: Book) =>
   [
     b.series ? `${b.series}${b.seriesIndex ? ` #${b.seriesIndex}` : ""}` : "",
@@ -136,6 +150,7 @@ function init() {
       caption.dataset.open = "false";
       return;
     }
+    track("book_opened", { ...bookProps(book), shelf: "3d" });
     fill(caption, book);
     caption.dataset.mode = placement.mode;
     caption.style.left = `${placement.left}px`;
@@ -145,6 +160,11 @@ function init() {
     caption.dataset.open = "true";
   };
 
+  // One event per shelf that the visitor sees: which view, and why.
+  const shown = (view: ShelfMode, quality: "high" | "low" | null, reason = "auto") =>
+    track("books_shelf_shown", { shelf: view, quality, reason, books: books.length });
+  let why = "auto";
+
   const start3d = async () => {
     if (shelf || starting) return;
     starting = true;
@@ -153,8 +173,10 @@ function init() {
     try {
       const { createShelf, DIM } = await import("./scene");
       if (!document.body.contains(root)) return;
+      const quality =
+        (new URLSearchParams(location.search).get("quality") as "high" | "low" | null) ?? decideQuality(device);
       shelf = await createShelf(stage, canvas, books, {
-        quality: (new URLSearchParams(location.search).get("quality") as "high" | "low" | null) ?? decideQuality(device),
+        quality,
         dark: document.documentElement.classList.contains("dark"),
         onSelect,
         onDim: (amount) => {
@@ -164,11 +186,13 @@ function init() {
         },
       });
       window.__shelf = Object.assign(shelf, { ready: true });
+      shown("3d", quality, why);
     } catch (err) {
       console.warn("[books] 3D shelf failed, using the flat shelf", err);
       stop3d();
       device.webgl2 = false;
       setMode("flat");
+      shown("flat", null, "3d_failed");
     } finally {
       starting = false;
       delete root.dataset.loading;
@@ -186,6 +210,7 @@ function init() {
   };
 
   const openFlat = (b: Book) => {
+    track("book_opened", { ...bookProps(b), shelf: "flat" });
     fill(dialog, b);
     const img = dialog.querySelector<HTMLImageElement>("[data-book='cover']")!;
     const plain = dialog.querySelector<HTMLElement>("[data-book='plain']")!;
@@ -230,10 +255,12 @@ function init() {
     } catch {
       /* storage blocked */
     }
+    why = "toggle";
     if (next === "3d") void start3d();
     else {
       stop3d();
       setMode("flat");
+      shown("flat", null, why);
     }
   });
 
@@ -250,6 +277,7 @@ function init() {
 
   setMode("flat");
   if (decideMode(device) === "3d") void start3d();
+  else shown("flat", null);
 }
 
 document.addEventListener("astro:page-load", init);

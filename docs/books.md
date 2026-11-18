@@ -87,3 +87,14 @@ them again when the shelf changes a lot. The video is extra: most apps show
 only the image.
 
 Wood textures: "Walnut Veneer" (case) and "Wood Floor" (floor) from Poly Haven (CC0).
+
+## Analytics
+
+PostHog loads from `Base.astro` in production, so `/books` sends page views like every other page. The page script (`src/books/main.ts`) adds two events:
+
+| Event | When | Properties |
+| --- | --- | --- |
+| `book_opened` | A visitor takes a book out (3D) or opens its dialog (flat). | `book_id`, `title`, `author`, `genre`, `series`, `shelf` (`3d` or `flat`) |
+| `books_shelf_shown` | A shelf view comes into use: on page load, and after the switch link. | `shelf` (`3d` or `flat`), `quality` (`high`, `low` or null), `reason` (`auto`, `toggle` or `3d_failed`), `books` (count) |
+
+Nothing is sent when PostHog is not loaded (dev, or a visitor who blocks it).
