@@ -7,6 +7,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { GTAOPass } from "three/addons/postprocessing/GTAOPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { casePlan, caseSize, groupByGenre, packCells, shade, shelfTop, SHELF, type Book, type CaseSize } from "./layout";
 import { drawLabel, drawPageEdges, drawPlainCover, drawSpine, loadSpineFonts } from "./spine";
 
@@ -39,6 +40,8 @@ export interface Shelf {
   /** Test hook: stop the frame loop, so that only `advance` moves time. */
   freeze: (on: boolean) => void;
   selected: () => string | null;
+  /** Test hook: draw calls, triangles and GPU memory of the last frame. */
+  info: () => { calls: number; triangles: number; textures: number; geometries: number; programs: number; undressed: number };
 }
 
 const MM = 0.001;
@@ -56,6 +59,16 @@ export const FLOOR_FADE = 64;
 /** How dark the shelf and the page go behind an open book. Also used by the CSS backdrop. */
 export const DIM = 0.55;
 
+/**
+ * Render layers. The camera draws layer 0. A book is drawn there as one mesh
+ * with a few materials, but the shadow map (SHADOW) and the ambient occlusion
+ * pass (AO) only need its shape, so they draw a one-material copy of it: one
+ * draw call per book in place of one per material. Everything else is on all
+ * three layers.
+ */
+const SHADOW = 1;
+const AO = 2;
+
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const smooth = (a: number, b: number, v: number) => {
   const t = clamp((v - a) / (b - a), 0, 1);
@@ -68,6 +81,8 @@ interface BookObject {
   group: THREE.Group;
   home: THREE.Vector3;
   cover: THREE.MeshStandardMaterial;
+  /** True once the cover face has a picture: the typeset one or the photo. */
+  dressed: boolean;
   hover: number;
   hoverTarget: number;
   /** 0 on the shelf, 1 held up in front of the camera. */
@@ -96,9 +111,15 @@ export async function createShelf(
   });
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFShadowMap;
+  // The shadows change only when a book moves or the case is built again, not
+  // when the camera sways with the pointer: draw the shadow map only then.
+  renderer.shadowMap.autoUpdate = false;
+  renderer.shadowMap.needsUpdate = true;
   renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1;
   renderer.setClearColor(0x000000, 0);
+  // Count draw calls over a whole frame (shadow, AO and main passes), not per pass.
+  renderer.info.autoReset = false;
   const maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
   const scene = new THREE.Scene();
@@ -117,6 +138,7 @@ export async function createShelf(
   key.shadow.bias = -0.0004;
   key.shadow.normalBias = 0.004;
   key.shadow.radius = high ? 5 : 3;
+  key.shadow.camera.layers.set(SHADOW);
   const fill = new THREE.DirectionalLight(0xdfe9ff, 0.5);
   // Lights the book that is held up; it comes on as the shelf dims.
   const reading = new THREE.DirectionalLight(0xfff6ea, 0);
@@ -179,6 +201,8 @@ export async function createShelf(
     cream: new THREE.MeshStandardMaterial({ map: edgeTex, color: 0xf3ead6, roughness: 0.95 }),
     pulp: new THREE.MeshStandardMaterial({ map: edgeTex, color: 0xe9dab6, roughness: 0.95 }),
   };
+  /** For the one-material copies of the books that the shadow and AO passes draw. */
+  const shapeMat = new THREE.MeshBasicMaterial();
   // Darkens what is drawn and leaves the see-through wall alone: the page
   // behind the canvas dims in CSS by the same amount.
   const dimMat = new THREE.MeshBasicMaterial({
@@ -218,23 +242,61 @@ export async function createShelf(
     photo.colorSpace = THREE.SRGBColorSpace;
     photo.anisotropy = maxAniso;
   };
-  const plainCover = (book: Book) => {
-    const t = new THREE.CanvasTexture(drawPlainCover(book));
+  /**
+   * The typeset cover. Drawing all of them takes a second or more and a lot of
+   * memory, so they are drawn after the shelf is first on screen, a few per
+   * idle moment, or at once for a book the visitor points at. Until then the
+   * cover face has the plain colour that the typeset cover is printed on.
+   */
+  const dressCover = (o: BookObject) => {
+    if (o.dressed) return;
+    o.dressed = true;
+    const t = new THREE.CanvasTexture(drawPlainCover(o.book));
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = maxAniso;
-    return t;
+    // Upload now, a slice at a time, not all at once in the next frame.
+    renderer.initTexture(t);
+    o.cover.map = t;
+    o.cover.color.set(0xffffff);
+    o.cover.needsUpdate = true;
   };
+  // Photos are decoded off the main thread where the browser can, so pointing
+  // along the shelf does not stall the frames.
+  const bitmaps =
+    typeof createImageBitmap === "function"
+      ? new THREE.ImageBitmapLoader().setOptions({ imageOrientation: "flipY", premultiplyAlpha: "none" })
+      : null;
   const loadCover = (o: BookObject) => {
     const { book } = o;
+    dressCover(o);
     if (!book.cover || coverTextures.has(book.id)) return;
-    const t = loader.load(book.cover, () => {
+    const show = (t: THREE.Texture) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = maxAniso;
+      if (disposed) return t.dispose();
+      coverTextures.set(book.id, t);
+      o.cover.map?.dispose();
       o.cover.map = t;
       o.cover.needsUpdate = true;
       invalidate();
-    });
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = maxAniso;
-    coverTextures.set(book.id, t);
+    };
+    // A placeholder keeps the request from being made twice.
+    coverTextures.set(book.id, new THREE.Texture());
+    if (bitmaps) {
+      bitmaps.load(
+        book.cover,
+        (bmp) => {
+          const t = new THREE.Texture(bmp);
+          t.flipY = false;
+          t.needsUpdate = true;
+          show(t);
+        },
+        undefined,
+        () => coverTextures.delete(book.id),
+      );
+    } else {
+      const t = loader.load(book.cover, () => show(t));
+    }
   };
 
   // ---- world --------------------------------------------------------------
@@ -243,6 +305,8 @@ export async function createShelf(
   const dimmer = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), dimMat);
   dimmer.visible = false;
   dimmer.renderOrder = 5;
+  dimmer.layers.enable(SHADOW);
+  dimmer.layers.enable(AO);
   scene.add(dimmer);
 
   let objects: BookObject[] = [];
@@ -274,7 +338,10 @@ export async function createShelf(
   const woodBox = (w: number, h: number, d: number, grain: "x" | "y" | "z", mat: THREE.Material, ease = 0.0018) => {
     const g = new RoundedBoxGeometry(w, h, d, 2, Math.min(ease, w / 2, h / 2, d / 2));
     worldUv(g, grain, 1.25);
+    // The boards never move: build() merges them into one mesh per material.
+    g.clearGroups();
     const m = new THREE.Mesh(g, mat);
+    m.userData.board = true;
     m.castShadow = true;
     m.receiveShadow = true;
     return m;
@@ -293,7 +360,7 @@ export async function createShelf(
 
     const jacket = new THREE.MeshStandardMaterial({ color: book.spine.bg, roughness: hard ? 0.5 : 0.62 });
     const inside = new THREE.MeshStandardMaterial({ color: shade(book.spine.bg, 0.75), roughness: 0.9 });
-    const cover = new THREE.MeshStandardMaterial({ map: plainCover(book), roughness: hard ? 0.42 : 0.55 });
+    const cover = new THREE.MeshStandardMaterial({ color: book.spine.bg, roughness: hard ? 0.42 : 0.55 });
     const spineMat = new THREE.MeshStandardMaterial({
       map: spineTexture(book),
       roughness: hard ? 0.5 : 0.62,
@@ -314,22 +381,11 @@ export async function createShelf(
         uv.setXY(i, pos.getZ(i) / 0.02 + t * 37, other / 0.05);
       }
     }
-    const pages = new THREE.Mesh(pg, hard ? pageMats.cream : pageMats.pulp);
-    pages.position.x = -w / 2 + gap + pw / 2;
+    pg.translate(-w / 2 + gap + pw / 2, 0, 0);
 
-    // A board is one box: its four edges are one draw call, its two faces one each.
-    const boardBox = () => {
-      const g = new THREE.BoxGeometry(w, h, board);
-      g.clearGroups();
-      g.addGroup(0, 24, 0);
-      g.addGroup(24, 6, 1);
-      g.addGroup(30, 6, 2);
-      return g;
-    };
-    const front = new THREE.Mesh(boardBox(), [jacket, cover, inside]);
-    front.position.z = t / 2 - board / 2;
-    const back = new THREE.Mesh(boardBox(), [jacket, inside, jacket]);
-    back.position.z = -t / 2 + board / 2;
+    // The boards. In a box the index runs: four edges (0 to 24), the +z face (24 to 30), the -z face (30 to 36).
+    const front = new THREE.BoxGeometry(w, h, board).translate(0, 0, t / 2 - board / 2);
+    const back = new THREE.BoxGeometry(w, h, board).translate(0, 0, -t / 2 + board / 2);
 
     // Spine: a strip across the thickness, rounded on a hardcover.
     const sg = new THREE.PlaneGeometry(t, h, hard ? 10 : 1, 1);
@@ -340,19 +396,65 @@ export async function createShelf(
       sp.setX(i, -w / 2 - bulge * (1 - k * k));
     }
     sg.computeVertexNormals();
-    const spine = new THREE.Mesh(sg, spineMat);
 
-    for (const m of [pages, front, back, spine]) {
-      m.castShadow = true;
-      m.receiveShadow = true;
-      group.add(m);
+    // One mesh for the whole book, its triangles sorted by material: one draw call per material.
+    const parts = [pg, front, back, sg];
+    const geo = mergeGeometries(parts.map((g) => g.toNonIndexed()))!;
+    for (const g of parts) g.dispose();
+    const at: number[] = [];
+    {
+      let n = 0;
+      for (const g of parts) {
+        at.push(n);
+        n += g.index ? g.index.count : g.attributes.position.count;
+      }
     }
+    const [P, F, B, S] = at;
+    const range = (a: number, b: number) => Array.from({ length: b - a }, (_, i) => a + i);
+    const sorted = [
+      [...range(F, F + 24), ...range(B, B + 24), ...range(B + 30, B + 36)], // jacket
+      [...range(F + 30, F + 36), ...range(B + 24, B + 30)], // inside
+      range(F + 24, F + 30), // cover
+      range(P, F), // pages
+      range(S, S + sg.index!.count), // spine
+    ];
+    geo.setIndex(sorted.flat());
+    let start = 0;
+    sorted.forEach((list, i) => {
+      geo.addGroup(start, list.length, i);
+      start += list.length;
+    });
+    const mesh = new THREE.Mesh(geo, [jacket, inside, cover, hard ? pageMats.cream : pageMats.pulp, spineMat]);
+    mesh.receiveShadow = true;
+    group.add(mesh);
+
+    // The shape alone, for the shadow map and the ambient occlusion pass. The
+    // spine is two-sided, so the shadow copy has its triangles both ways round.
+    const spineTris = sorted[4];
+    const flipped: number[] = [];
+    for (let i = 0; i < spineTris.length; i += 3) flipped.push(spineTris[i], spineTris[i + 2], spineTris[i + 1]);
+    const shape = (index: number[]) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", geo.attributes.position);
+      g.setAttribute("normal", geo.attributes.normal);
+      g.setIndex(index);
+      return g;
+    };
+    const all = sorted.flat();
+    const shadow = new THREE.Mesh(shape([...all, ...flipped]), shapeMat);
+    shadow.castShadow = true;
+    shadow.layers.set(SHADOW);
+    const ao = new THREE.Mesh(shape(all), shapeMat);
+    ao.layers.set(AO);
+    group.add(shadow, ao);
+
     group.userData.bookId = book.id;
     return {
       book,
       group,
       home: new THREE.Vector3(),
       cover,
+      dressed: false,
       hover: 0,
       hoverTarget: 0,
       out: 0,
@@ -367,7 +469,7 @@ export async function createShelf(
       if (!m.isMesh) return;
       m.geometry.dispose();
       for (const mat of Array.isArray(m.material) ? m.material : [m.material]) {
-        const shared: THREE.Material[] = [woodMat, backMat, floorMat, paintMat, ...shadowMats, steelMat, pageMats.cream, pageMats.pulp, glowMat];
+        const shared: THREE.Material[] = [woodMat, backMat, floorMat, paintMat, ...shadowMats, steelMat, pageMats.cream, pageMats.pulp, glowMat, shapeMat];
         if (shared.includes(mat)) continue;
         const std = mat as THREE.MeshStandardMaterial;
         // Spine and cover textures are cached across rebuilds; label and plain-cover ones are not.
@@ -565,7 +667,14 @@ export async function createShelf(
           tex.anisotropy = maxAniso;
           const plain = new THREE.MeshStandardMaterial({ color: 0xb8924a, roughness: 0.4, metalness: 0.8 });
           const face = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.55, metalness: 0.15 });
-          const holder = new THREE.Mesh(new THREE.BoxGeometry(lw, lh, 0.002), [plain, plain, plain, plain, face, plain]);
+          // The face is the +z side of the box (index 24 to 30); the metal is the rest, in one draw call.
+          const hg = new THREE.BoxGeometry(lw, lh, 0.002);
+          const hi = Array.from(hg.index!.array);
+          hg.setIndex([...hi.slice(0, 24), ...hi.slice(30, 36), ...hi.slice(24, 30)]);
+          hg.clearGroups();
+          hg.addGroup(0, 30, 0);
+          hg.addGroup(30, 6, 1);
+          const holder = new THREE.Mesh(hg, [plain, face]);
           holder.castShadow = true;
           add(holder, x0 + lab.x * MM + lw / 2, y - board / 2, boardFront + 0.001);
         }
@@ -585,6 +694,39 @@ export async function createShelf(
         strips.push(strip);
       }
     }
+
+    // Merge the boards of the case, one mesh per material.
+    const boards = new Map<THREE.Material, THREE.Mesh[]>();
+    for (const o of world.children) {
+      const m = o as THREE.Mesh;
+      if (!m.userData.board) continue;
+      const list = boards.get(m.material as THREE.Material) ?? [];
+      list.push(m);
+      boards.set(m.material as THREE.Material, list);
+    }
+    for (const [mat, list] of boards) {
+      const geo = mergeGeometries(
+        list.map((m) => {
+          m.updateMatrix();
+          return m.geometry.applyMatrix4(m.matrix);
+        }),
+      )!;
+      for (const m of list) {
+        m.geometry.dispose();
+        world.remove(m);
+      }
+      const merged = new THREE.Mesh(geo, mat);
+      merged.castShadow = true;
+      merged.receiveShadow = true;
+      world.add(merged);
+    }
+    // Everything but the books is drawn the same way in every pass.
+    world.traverse((o) => {
+      if (o.parent?.userData.bookId) return;
+      o.layers.enable(SHADOW);
+      o.layers.enable(AO);
+    });
+    renderer.shadowMap.needsUpdate = true;
 
     // Key light from the upper left; its shadow map is fitted to the case and the floor near it.
     key.position.set(-0.75, 1.35, 1.9).normalize().multiplyScalar(view.h / 2 + 3);
@@ -680,6 +822,16 @@ export async function createShelf(
     gtao.updateGtaoMaterial({ radius: 0.07, distanceExponent: 1.4, thickness: 1.2, scale: 1.15, samples: 16 });
     gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
     gtao.blendIntensity = 0.9;
+    // The AO pass draws the one-material copies of the books (see AO).
+    const aoRender = gtao.render.bind(gtao);
+    gtao.render = (...args: Parameters<GTAOPass["render"]>) => {
+      camera.layers.set(AO);
+      try {
+        aoRender(...args);
+      } finally {
+        camera.layers.set(0);
+      }
+    };
     composer.addPass(gtao);
     composer.addPass(new OutputPass());
   }
@@ -881,6 +1033,7 @@ export async function createShelf(
     g.scale.setScalar(THREE.MathUtils.lerp(1, target.scale, fly));
   };
 
+  const was = new THREE.Matrix4();
   const update = (dt: number) => {
     let active = false;
     const k = 1 - Math.exp(-dt * 9);
@@ -907,7 +1060,10 @@ export async function createShelf(
         active = true;
       }
       dim = Math.max(dim, smooth(0.1, 0.8, o.out));
+      was.copy(o.group.matrix);
       place(o);
+      o.group.updateMatrix();
+      if (!was.equals(o.group.matrix)) renderer.shadowMap.needsUpdate = true;
     }
     // The page dims in display space; the scene is dimmed in linear light, so the
     // amount is converted to give the same result on screen.
@@ -919,6 +1075,7 @@ export async function createShelf(
   };
 
   const render = () => {
+    renderer.info.reset();
     if (composer) composer.render();
     else renderer.render(scene, camera);
   };
@@ -941,11 +1098,39 @@ export async function createShelf(
   ro.observe(stage);
   resize();
   update(0);
+  // Compile the shaders in the background where the browser can, so the
+  // first frame does not hold up the page.
+  await renderer.compileAsync(scene, camera).catch(() => {});
   render();
+
+  // Draw the typeset covers once the shelf is on screen, in small slices.
+  const idle: (fn: () => void) => void =
+    "requestIdleCallback" in window ? (fn) => requestIdleCallback(fn, { timeout: 200 }) : (fn) => setTimeout(fn, 16);
+  const dressSome = () => {
+    if (disposed) return;
+    const until = performance.now() + 8;
+    const left = objects.filter((o) => !o.dressed);
+    for (const o of left) {
+      dressCover(o);
+      if (performance.now() > until) break;
+    }
+    // One new frame when all are done, not one per slice.
+    if (objects.some((o) => !o.dressed)) idle(dressSome);
+    else if (left.length) invalidate();
+  };
+  idle(dressSome);
 
   return {
     select,
     selected: () => selectedId,
+    info: () => ({
+      calls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      textures: renderer.info.memory.textures,
+      geometries: renderer.info.memory.geometries,
+      programs: renderer.info.programs?.length ?? 0,
+      undressed: objects.filter((o) => !o.dressed).length,
+    }),
     setTheme(next: boolean) {
       dark = next;
       applyTheme();
