@@ -47,6 +47,7 @@ const preheader = post.data.description ?? "";
       .card { background: #ffffff; border: 1px solid #e2e2de; border-radius: 8px; padding: 32px 28px; }
       .brand { font-size: 13px; letter-spacing: 0.04em; color: #6b6b66; margin: 0 0 20px; }
       .brand a { color: #6b6b66; text-decoration: none; }
+      .series { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: #3d5a80; margin: 0 0 6px; }
       h1.post-title { font-size: 26px; line-height: 1.25; margin: 0 0 6px; }
       .meta { font-size: 13px; color: #6b6b66; margin: 0 0 24px; }
       .meta a { color: #1a5fb4; }
@@ -70,6 +71,7 @@ const preheader = post.data.description ?? "";
     <div class="wrapper">
       <div class="card">
         <p class="brand"><a href={site}>musings — darshanpania.me</a></p>
+        {post.data.series && <p class="series">{post.data.series}</p>}
         <h1 class="post-title">{post.data.title}</h1>
         <p class="meta">
           {fmt(post.data.date)} · <a href={postUrl}>read on the site →</a>

@@ -24,6 +24,9 @@ const posts = defineCollection({
     category: z.enum(["tech", "fiction", "non-fiction"]),
     description: z.string().optional(),
     coverImage: z.string().startsWith("/images/posts/").optional(),
+    // Series line shown above the title, e.g. "Building FPL Guru · Part 1 of 7".
+    // A post with a series also shows its description under the title.
+    series: z.string().optional(),
     draft: z.boolean().default(false),
   }),
 });

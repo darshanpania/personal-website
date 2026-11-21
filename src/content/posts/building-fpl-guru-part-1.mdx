@@ -1,0 +1,124 @@
+---
+title: "From a GPT-4 Prompt to FPL Guru"
+date: 2026-11-11
+category: tech
+description: "I asked a chatbot for a cheap Arsenal defender and it gave me a man who had left the club two years earlier. That annoyed me enough to build a product. This is the first of seven posts on how that went."
+coverImage: /images/posts/building-fpl-guru-part-1-cover.png
+series: "Building FPL Guru · Part 1 of 7"
+draft: false
+---
+
+import Ranks from "@/components/building-fpl-guru/Ranks.astro";
+import Chat from "@/components/building-fpl-guru/Chat.astro";
+import Terminal from "@/components/building-fpl-guru/Terminal.astro";
+import Stats from "@/components/building-fpl-guru/Stats.astro";
+import FirstCommitShots from "@/components/building-fpl-guru/FirstCommitShots.astro";
+import CommitsPerMonth from "@/components/building-fpl-guru/CommitsPerMonth.astro";
+
+I've played Fantasy Premier League since the 2010/11 season. That's fifteen years of picking eleven footballers every week and then watching the one I benched score a hat-trick.
+
+If you don't play, here's the whole game. You get £100m. You pick 15 Premier League players. They score points when they do good things in real matches. You get one free transfer a week, a captain who scores double, and a deadline that always arrives when you're in a meeting. Eleven million people play it. Most of us are bad at it.
+
+I was reliably, comfortably bad at it.
+
+<Ranks />
+
+Three seasons in the hundreds of thousands. That's the rank of a man who knows football, has opinions, and loses to his cousin who picks players by how nice their name sounds.
+
+Keep that last bar in your head. We'll come back to it.
+
+## The Sokratis incident
+
+March 2023. GPT-4 had just come out and everyone was asking it to write poems about their dog. I asked it to fix my FPL team.
+
+<Chat />
+
+Sokratis Papastathopoulos. A lovely defender. Also, at that point, two years gone from Arsenal. I'm an Arsenal fan. You can't do this to me.
+
+And it wasn't a one-off. It quoted "recent form" from some parallel universe. It was confident about fixtures that didn't exist. The model had a knowledge cutoff, and FPL is a game where news from three hours ago decides your week.
+
+So I understood two things that evening. One, this thing is clearly smart. Two, smart is useless here without live data. The model didn't need to be better. It needed to be *fed*.
+
+That's the whole idea behind FPL Guru. It was the idea in 2023 and it's still the idea today, with about 11,000 more commits on top of it.
+
+## Copy, paste, pray
+
+I'm an engineering manager with a full-time job, and this was a side project. So I did what everybody did in 2024. I opened ChatGPT in one tab and an editor in the other, and I became a very slow, very expensive clipboard.
+
+Ask for a function. Copy it. Paste it. Run it. Paste the error back. Repeat until the error changes into a different error.
+
+The ideas were just in my head. No tickets, no plan, no document. I coded at nights and on weekends, and the split wasn't even my choice. The FPL API goes down or goes stale while matches are on. So nights were for building features against the API, and weekends were for everything that didn't need it. The Premier League fixture list was my project manager.
+
+On 6th September 2024, I made the first commit.
+
+<Terminal />
+
+<Stats />
+
+I went back and ran that first commit last week, because I wanted to see it again. It's glorious.
+
+<FirstCommitShots />
+
+Let me give you the tour. There are files called `fpl_analyzer.py`, `fpl_recommender.py`, `fpl_team_optimizer.py` and `fpl_budget_manager.py`, which sounds like a company with four departments and one employee. I committed the compiled `.pyc` files. I committed my IDE's settings folder. The login page asks for your FPL session cookie, which is a thing no human should ever type into a stranger's website.
+
+But look closer and the Sokratis lesson is already there. Commit number one fetches live player data from the FPL API, and it calls `gpt-4o-mini` to summarize player news. Real data in, model on top. The shape was right from day one. Everything else was wrong.
+
+Then I stopped. For six months.
+
+## Six months of nothing
+
+<CommitsPerMonth />
+
+Look at that gap. One bar in September 2024, then nothing till March.
+
+The reason is that this way of building was exhausting. Every feature was an hour of copy and paste. Every bug was me explaining my own code to a chatbot that had forgotten it.
+
+## What pulled me back
+
+Sonnet 3.7 came out in February 2025. On 3rd March, there's a commit in the repo called "March 2025 update". Not my finest commit message. But that's the one where FPL Guru came back to life, and it's when I started committing and pushing code regularly.
+
+I was on Cursor by then. And one night around that time, Cursor "improved" my code so thoroughly that nothing worked anymore.
+
+So I bought the $20 Windsurf plan to fix what Cursor broke. It did. And I stayed on Windsurf for months after that.
+
+From then on the models got much better at what we now call agentic coding. I'd stop pasting functions and start describing outcomes. The model would read the files itself, change four of them, and tell me what it did. Still me driving. But I wasn't the clipboard anymore.
+
+The timeline after that, quickly, because the next six posts slow all of this down:
+
+- **13th April 2025.** The first real account in the database.
+- **21st April 2025.** Pull request #1. The frontend moves to React.
+- **July 2025.** The first AI chat, on GPT-3.5 Turbo. Part 5 is about everything wrong with it.
+- **21st December 2025.** I write a `CLAUDE.md`. By now it's Opus models and Claude Code, and for the first time I can trust a model to work on its own while I do something else.
+- **21st January 2026.** The backend gets re-architected and the whole UI moves from MUI to shadcn. In one day. A year earlier that was a quarter of my weekends.
+- **14th February 2026.** The first commit in the repo written by Claude, with its name on it. Valentine's Day. I'm not reading into it.
+- **18th February 2026.** Closed alpha. By the end of the month, 14 users.
+
+Fourteen. I've run launches at work with more people in the meeting.
+
+## Enter DK
+
+In April 2026, DK joined. He's a work colleague and he's a great friend. I'm an Arsenal fan and he's a Manchester United fan, so we enjoy good banter, and by "enjoy" I mean one of us is always suffering (nowadays it's almost always him).
+
+DK has a great product building mind, and a strong AI native mindset. I'd spent a year and a half bolting AI onto the way I already worked. He just started from the other end. Within weeks he'd brought in a real prediction model, and then review automation, and then things I didn't have names for yet. Look at the last bar on the chart above. That's April, the month he showed up. It doesn't fit on the scale.
+
+Most of this series is the story of what the two of us, plus a growing crowd of agents, did between April and November. He's in every post from here.
+
+## Back to that last bar
+
+Last season I finished with 2,332 points. Overall rank 87,870. Top 0.7% in the world, and around 7K in India. My best ever, by a distance, after fifteen years of trying.
+
+I'm not going to tell you an app did that. Football did some of it. Luck did a lot of it. But I'd spent the season making decisions with real data in front of me instead of vibes, and I had stopped captaining people because I liked their haircut.
+
+Today, 180 people use FPL Guru. That's not a big number, and I love it anyway, because every one of them has the same problem I had.
+
+<p class="big">Pick a problem that you have and solve for it. Then go find the others who have it too.</p>
+
+That's the only startup advice I'm qualified to give. I didn't do market research. I got annoyed at a chatbot.
+
+If I could change one thing, it's this. I took a lot of time to adapt. For a year and a half I bolted AI onto my set beliefs and my set process, instead of rewiring myself to think from first principles. I spent $20 on Windsurf when it was small. I tried Claude Code in beta. I built an MCP server just to learn what one was. Each of those felt like a detour and each of them was the actual road. Try everything, learn, fail, and iterate as fast as you can.
+
+Next up, the brain of the thing. For most of FPL Guru's life the "prediction model" was one line of maths with a dice roll inside it. I'll show you the dice.
+
+Play FPL? [Try FPL Guru](https://fplguru.com/?utm_source=darshanpania.me&utm_medium=blog&utm_campaign=building_fplguru&utm_content=part_1) before your next deadline. It's the thing this whole series is about.
+
+<p class="sig">Part 2, "Teaching a machine to play FPL", is coming soon.</p>
